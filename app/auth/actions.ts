@@ -53,7 +53,7 @@ export async function authAction(mode: string, form: FormData) {
     const { error } = await db.auth.updateUser({ password });
     return error
       ? { error: "Ссылка истекла. Запросите восстановление ещё раз." }
-      : { redirect: "/" };
+      : { redirect: "/workspace" };
   }
   const { error } = await db.auth.signInWithPassword({ email, password });
   return error
@@ -61,5 +61,5 @@ export async function authAction(mode: string, form: FormData) {
         error:
           "Не удалось войти. Проверьте email, пароль и подтверждение почты.",
       }
-    : { redirect: "/" };
+    : { redirect: "/workspace" };
 }

@@ -5,6 +5,7 @@ export type Profile = {
   email: string;
   role: "admin" | "employee";
   playful_reactions?: boolean;
+  avatar_id?: string | null;
   access_status: "pending" | "active" | "blocked";
 };
 export type Task = {

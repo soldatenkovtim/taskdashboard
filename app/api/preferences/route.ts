@@ -1,4 +1,5 @@
 import { NextRequest, NextResponse } from "next/server";
+import { validAvatar } from "@/lib/avatars";
 import { configured, supabase } from "@/lib/supabase";
 export async function POST(request: NextRequest) {
   if (request.headers.get("origin") !== request.nextUrl.origin)
@@ -18,18 +19,27 @@ export async function POST(request: NextRequest) {
   if (!user)
     return NextResponse.json({ error: "Войдите в аккаунт" }, { status: 401 });
   const body = await request.json().catch(() => null);
-  if (typeof body?.enabled !== "boolean")
-    return NextResponse.json({ error: "Укажите ON или OFF" }, { status: 400 });
-  const { data, error } = await db.rpc("set_playful_reactions", {
-    enabled: body.enabled,
-  });
+  if (body && Object.hasOwn(body, "avatar_id")) {
+    if (!validAvatar(body.avatar_id))
+      return NextResponse.json(
+        { error: "Выберите аватар из списка" },
+        { status: 400 },
+      );
+    const { data, error } = await db.rpc("set_avatar", {
+      selected_avatar: body.avatar_id,
+    });
+    return NextResponse.json(
+      error
+        ? {
+            error:
+              "Не удалось сохранить аватар. Проверьте подключение и миграцию 003.",
+          }
+        : { avatar_id: data },
+      { status: error ? 400 : 200 },
+    );
+  }
   return NextResponse.json(
-    error
-      ? {
-          error:
-            "Не удалось сохранить настройку. Проверьте подключение и миграцию 002.",
-        }
-      : { enabled: data },
-    { status: error ? 400 : 200 },
+    { error: "Изменение этой настройки недоступно" },
+    { status: 400 },
   );
 }

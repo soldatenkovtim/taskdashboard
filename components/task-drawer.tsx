@@ -12,9 +12,10 @@ import {
   CalendarDays,
   ArrowUpRight,
 } from "lucide-react";
+import Avatar from "./avatar";
 import ReactMarkdown from "react-markdown";
 import type { Data, Task } from "@/lib/types";
-import { statuses, overdue, date, initials, eventLabels } from "@/lib/types";
+import { statuses, overdue, date, eventLabels } from "@/lib/types";
 import { durations } from "@/lib/metrics";
 import type { Mutate } from "./dashboard";
 export function Overlay({
@@ -275,9 +276,11 @@ export function TaskDrawer({
         </strong>
         <span>Исполнитель</span>
         <strong className="assignee">
-          <span className="avatar small">
-            {initials(assignee?.name ?? "Участник")}
-          </span>
+          <Avatar
+            small
+            name={assignee?.name ?? "Участник"}
+            avatar={assignee?.avatar_id}
+          />
           {assignee?.name ?? "Участник"}
         </strong>
         <span>Дедлайн</span>

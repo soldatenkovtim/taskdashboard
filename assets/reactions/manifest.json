@@ -1,0 +1,52 @@
+[
+  {
+    "slug": "good-job",
+    "title": "GOOD JOB, BABY.",
+    "prompt": "Use case: stylized-concept. Create a single animation sprite sheet, exactly 4 equal square frames in ONE horizontal row, no gaps, no borders, no text. Each frame shows the SAME adult femme fatale cabaret woman, age 30, black waved bob, ivory face, bright crimson red lips, black high-neck evening dress and opera gloves. Graphic hand-drawn film noir animation, thin silver contours, charcoal grain, ink-black midnight background, monochrome EXCEPT red lips, no gold. Fixed camera, identical head scale and centered chest-up placement in all 4 frames. This is a short reaction 'GOOD JOB, BABY.': frame 1 poised smile looking at viewer; frame 2 one eye closing in a knowing wink; frame 3 fully closed wink with slightly wider pleased smile; frame 4 back to original smile. Carefully align face in all frames for looping animation. Output wide 4:1 sprite sheet."
+  },
+  {
+    "slug": "make-them-work",
+    "title": "MAKE THEM WORK.",
+    "prompt": "Use case: stylized-concept. Create one animation sprite sheet, exactly FOUR equal panels in ONE horizontal row, no gutters, no borders, no text. Same adult femme fatale age 30 in every frame, waved black bob, porcelain ivory face, crimson red lips, black high-neck evening dress, black opera gloves. Hand-drawn graphic film noir cabaret animation, thin silver contours, charcoal grain, ink-black midnight backdrop. Monochrome EXCEPT red lipstick. No gold. Fixed camera, aligned chest-up character at same scale and centered in each frame; hands visible within each panel. Four sequential poses forming loop: A commanding cabaret director: gloved hand raised, then index finger points decisively toward viewer, then holds, then returns. Confident commanding expression. Semantic context MAKE THEM WORK. but do NOT draw any text. Output wide sprite sheet, each quarter contains exactly one complete frame."
+  },
+  {
+    "slug": "youre-the-boss",
+    "title": "YOU'RE THE BOSS.",
+    "prompt": "Use case: stylized-concept. Create one animation sprite sheet, exactly FOUR equal panels in ONE horizontal row, no gutters, no borders, no text. Same adult femme fatale age 30 in every frame, waved black bob, porcelain ivory face, crimson red lips, black high-neck evening dress, black opera gloves. Hand-drawn graphic film noir cabaret animation, thin silver contours, charcoal grain, ink-black midnight backdrop. Monochrome EXCEPT red lipstick. No gold. Fixed camera, aligned chest-up character at same scale and centered in each frame; hands visible within each panel. Four sequential poses forming loop: An assured femme fatale: chin level, then chin lifts in confident acknowledgment with an eyebrow lifted, holds, returns. Hands resting on armchair. Semantic context YOU'RE THE BOSS. but do NOT draw any text. Output wide sprite sheet, each quarter contains exactly one complete frame."
+  },
+  {
+    "slug": "how-generous",
+    "title": "HOW GENEROUS OF YOU.",
+    "prompt": "Use case: stylized-concept. Create one animation sprite sheet, exactly FOUR equal panels in ONE horizontal row, no gutters, no borders, no text. Same adult femme fatale age 30 in every frame, waved black bob, porcelain ivory face, crimson red lips, black high-neck evening dress, black opera gloves. Hand-drawn graphic film noir cabaret animation, thin silver contours, charcoal grain, ink-black midnight backdrop. Monochrome EXCEPT red lipstick. No gold. Fixed camera, aligned chest-up character at same scale and centered in each frame; hands visible within each panel. Four sequential poses forming loop: An ironic gracious hostess: open gloved palm at chest, then palm opens outward offering extra time, slight knowing smile, returns. Semantic context HOW GENEROUS OF YOU. but do NOT draw any text. Output wide sprite sheet, each quarter contains exactly one complete frame."
+  },
+  {
+    "slug": "another-one-done",
+    "title": "ANOTHER ONE DONE.",
+    "prompt": "Use case: stylized-concept. Create one animation sprite sheet, exactly FOUR equal panels in ONE horizontal row, no gutters, no borders, no text. Same adult femme fatale age 30 in every frame, waved black bob, porcelain ivory face, crimson red lips, black high-neck evening dress, black opera gloves. Hand-drawn graphic film noir cabaret animation, thin silver contours, charcoal grain, ink-black midnight backdrop. Monochrome EXCEPT red lipstick. No gold. Fixed camera, aligned chest-up character at same scale and centered in each frame; hands visible within each panel. Four sequential poses forming loop: A satisfied cabaret star: gloved hands apart at chest, then hands meet in a single elegant applause clap, then separate, then resting again. Semantic context ANOTHER ONE DONE. but do NOT draw any text. Output wide sprite sheet, each quarter contains exactly one complete frame."
+  },
+  {
+    "slug": "not-good-enough",
+    "title": "NOT GOOD ENOUGH.",
+    "prompt": "Use case: stylized-concept. Create one animation sprite sheet, exactly FOUR equal panels in ONE horizontal row, no gutters, no borders, no text. Same adult femme fatale age 30 in every frame, waved black bob, porcelain ivory face, crimson red lips, black high-neck evening dress, black opera gloves. Hand-drawn graphic film noir cabaret animation, thin silver contours, charcoal grain, ink-black midnight backdrop. Monochrome EXCEPT red lipstick. No gold. Fixed camera, aligned chest-up character at same scale and centered in each frame; hands visible within each panel. Four sequential poses forming loop: A discerning cabaret director: stern appraising gaze, then slowly turns head slightly left in disapproval, slightly right, then faces forward. Closed lips, one arched eyebrow. Semantic context NOT GOOD ENOUGH. but do NOT draw any text. Output wide sprite sheet, each quarter contains exactly one complete frame."
+  },
+  {
+    "slug": "right-on-time",
+    "title": "RIGHT ON TIME.",
+    "prompt": "Use case: stylized-concept. Create one animation sprite sheet, exactly FOUR equal panels in ONE horizontal row, no gutters, no borders, no text. Same adult femme fatale age 30 in every frame, waved black bob, porcelain ivory face, crimson red lips, black high-neck evening dress, black opera gloves. Hand-drawn graphic film noir cabaret animation, thin silver contours, charcoal grain, ink-black midnight backdrop. Monochrome EXCEPT red lipstick. No gold. Fixed camera, aligned chest-up character at same scale and centered in each frame; hands visible within each panel. Four sequential poses forming loop: Punctuality rewarded: she glances at a small silver wristwatch on her raised gloved wrist, then looks at viewer, gives a pleased subtle nod, returns to watch. Semantic context RIGHT ON TIME. but do NOT draw any text. Output wide sprite sheet, each quarter contains exactly one complete frame."
+  },
+  {
+    "slug": "youre-late",
+    "title": "YOU'RE LATE, HONEY.",
+    "prompt": "Use case: stylized-concept. Create one animation sprite sheet, exactly FOUR equal panels in ONE horizontal row, no gutters, no borders, no text. Same adult femme fatale age 30 in every frame, waved black bob, porcelain ivory face, crimson red lips, black high-neck evening dress, black opera gloves. Hand-drawn graphic film noir cabaret animation, thin silver contours, charcoal grain, ink-black midnight backdrop. Monochrome EXCEPT red lipstick. No gold. Fixed camera, aligned chest-up character at same scale and centered in each frame; hands visible within each panel. Four sequential poses forming loop: Playful reproach for being late: she looks at viewer with raised eyebrow, then taps silver wristwatch with other gloved index finger, holds pointed look, returns. No anger. Semantic context YOU'RE LATE, HONEY. but do NOT draw any text. Output wide sprite sheet, each quarter contains exactly one complete frame."
+  },
+  {
+    "slug": "try-again",
+    "title": "TRY AGAIN, DARLING.",
+    "prompt": "Use case: stylized-concept. Create one animation sprite sheet, exactly FOUR equal panels in ONE horizontal row, no gutters, no borders, no text. Same adult femme fatale age 30 in every frame, waved black bob, porcelain ivory face, crimson red lips, black high-neck evening dress, black opera gloves. Hand-drawn graphic film noir cabaret animation, thin silver contours, charcoal grain, ink-black midnight backdrop. Monochrome EXCEPT red lipstick. No gold. Fixed camera, aligned chest-up character at same scale and centered in each frame; hands visible within each panel. Four sequential poses forming loop: Demanding but encouraging: gloved index finger raised, then makes a small circular try-again gesture, then beckons once toward viewer with knowing half-smile, returns. Semantic context TRY AGAIN, DARLING. but do NOT draw any text. Output wide sprite sheet, each quarter contains exactly one complete frame."
+  },
+  {
+    "slug": "its-a-date",
+    "title": "IT'S A DATE.",
+    "prompt": "Use case: stylized-concept. Create one animation sprite sheet, exactly FOUR equal panels in ONE horizontal row, no gutters, no borders, no text. Same adult femme fatale age 30 in every frame, waved black bob, porcelain ivory face, crimson red lips, black high-neck evening dress, black opera gloves. Hand-drawn graphic film noir cabaret animation, thin silver contours, charcoal grain, ink-black midnight backdrop. Monochrome EXCEPT red lipstick. No gold. Fixed camera, aligned chest-up character at same scale and centered in each frame; hands visible within each panel. Four sequential poses forming loop: Deadline agreed: poised femme fatale holding a small appointment card with a simple silver check mark and NO letters, then tilts card toward viewer, winks, then returns. Semantic context IT'S A DATE. but do NOT draw any text. Output wide sprite sheet, each quarter contains exactly one complete frame."
+  }
+]
