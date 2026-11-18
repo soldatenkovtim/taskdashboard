@@ -44,6 +44,9 @@ before(async () => {
   await db.exec(
     readFileSync("supabase/migrations/002_playful_reactions.sql", "utf8"),
   );
+  await db.exec(
+    readFileSync("supabase/migrations/003_profile_avatars.sql", "utf8"),
+  );
   for (const [id, name] of [
     [admin, "Админ"],
     [employee, "Сотрудник"],
@@ -323,60 +326,124 @@ test("Принятие не оставляет неразрешимый запр
   await mutate(id, "status", { status: "done" });
   assert.equal((await get(id)).status, "done");
 });
-test("Настройка реакций по умолчанию OFF и меняется только у текущего пользователя", async () => {
-  await identity(employee);
+test("Миграция включает реакции всем и удаляет возможность отключения", async () => {
+  await db.exec("reset role");
+  await db.exec(
+    readFileSync("supabase/migrations/004_reactions_always_on.sql", "utf8"),
+  );
   assert.equal(
     (
       await db.query<any>(
-        "select playful_reactions from public.profiles where id=$1",
-        [employee],
+        "select count(*)::int as n from public.profiles where not playful_reactions",
       )
-    ).rows[0].playful_reactions,
-    false,
+    ).rows[0].n,
+    0,
   );
-  await db.query("select public.set_playful_reactions(true)");
-  const snapshot = (
-    await db.query<any>("select public.workspace_data() as data")
-  ).rows[0].data;
-  assert.equal(snapshot.profile.playful_reactions, true);
+  await assert.rejects(
+    () => db.query("update public.profiles set playful_reactions=false"),
+    /reactions_always_on/,
+  );
+  await db.exec("set role authenticated");
+  await identity(employee);
+  await assert.rejects(
+    () => db.query("select public.set_playful_reactions(false)"),
+    /does not exist/,
+  );
+});
+test("Аватар: только собственный профиль, допустимый каталог и сброс", async () => {
+  await identity(employee);
+  await db.query("select public.set_avatar('noir-3')");
+  let snapshot = (await db.query<any>("select public.workspace_data() as data"))
+    .rows[0].data;
+  assert.equal(snapshot.profile.avatar_id, "noir-3");
+  assert.equal(snapshot.profile.role, "employee");
   await assert.rejects(
     () =>
-      db.query(
-        "update public.profiles set playful_reactions=true where id=$1",
-        [admin],
-      ),
+      db.query("select public.set_avatar('https://example.com/avatar.gif')"),
+    /Выберите/,
+  );
+  await assert.rejects(
+    () =>
+      db.query("update public.profiles set avatar_id='noir-1' where id=$1", [
+        admin,
+      ]),
     /permission denied/,
   );
   await identity(admin);
+  snapshot = (await db.query<any>("select public.workspace_data() as data"))
+    .rows[0].data;
+  assert.equal(snapshot.profile.avatar_id, null);
   assert.equal(
-    (
-      await db.query<any>(
-        "select playful_reactions from public.profiles where id=$1",
-        [admin],
-      )
-    ).rows[0].playful_reactions,
-    false,
+    snapshot.profiles.find((p: any) => p.id === employee).avatar_id,
+    "noir-3",
   );
-  await db.query("select public.set_playful_reactions(true)");
   await identity(employee);
-  await db.query("select public.set_playful_reactions(false)");
-  await identity(admin);
-  assert.equal(
-    (
-      await db.query<any>(
-        "select playful_reactions from public.profiles where id=$1",
-        [admin],
-      )
-    ).rows[0].playful_reactions,
-    true,
-  );
+  await db.query("select public.set_avatar(null)");
+  snapshot = (await db.query<any>("select public.workspace_data() as data"))
+    .rows[0].data;
+  assert.equal(snapshot.profile.avatar_id, null);
+  await identity("");
   await assert.rejects(
-    () => db.query("select public.set_playful_reactions(null)"),
-    /ON или OFF/,
+    () => db.query("select public.set_avatar('noir-1')"),
+    /Войдите/,
+  );
+});
+
+test("Посещения: 8-й день, без повторов, пропуск сбрасывает серию для обеих ролей", async () => {
+  await db.exec("reset role");
+  await db.exec(
+    readFileSync("supabase/migrations/005_visit_streak.sql", "utf8"),
+  );
+  for (const user of [employee, admin]) {
+    await db.exec("reset role");
+    await db.query(
+      "update public.profiles set last_visit_day=(now() at time zone 'Europe/Moscow')::date-1,visit_streak=6 where id=$1",
+      [user],
+    );
+    await db.exec("set role authenticated");
+    await identity(user);
+    const visit = async () =>
+      (await db.query<any>("select public.record_visit() as result")).rows[0]
+        .result;
+    assert.deepEqual(await visit(), { days: 7, reward: false });
+    await db.exec("reset role");
+    await db.query(
+      "update public.profiles set last_visit_day=(now() at time zone 'Europe/Moscow')::date-1 where id=$1",
+      [user],
+    );
+    await db.exec("set role authenticated");
+    assert.deepEqual(await visit(), { days: 8, reward: true });
+    assert.deepEqual(await visit(), { days: 8, reward: false });
+    await db.exec("reset role");
+    await db.query(
+      "update public.profiles set last_visit_day=(now() at time zone 'Europe/Moscow')::date-1 where id=$1",
+      [user],
+    );
+    await db.exec("set role authenticated");
+    assert.deepEqual(await visit(), { days: 9, reward: false });
+    await assert.rejects(
+      () =>
+        db.query("update public.profiles set visit_streak=7 where id=$1", [
+          user,
+        ]),
+      /permission denied/,
+    );
+    await db.exec("reset role");
+    await db.query(
+      "update public.profiles set last_visit_day=(now() at time zone 'Europe/Moscow')::date-2 where id=$1",
+      [user],
+    );
+    await db.exec("set role authenticated");
+    assert.deepEqual(await visit(), { days: 1, reward: false });
+  }
+  await identity(pending);
+  await assert.rejects(
+    () => db.query("select public.record_visit()"),
+    /Нет доступа/,
   );
   await identity("");
   await assert.rejects(
-    () => db.query("select public.set_playful_reactions(true)"),
+    () => db.query("select public.record_visit()"),
     /Войдите/,
   );
 });

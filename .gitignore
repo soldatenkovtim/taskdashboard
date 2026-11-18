@@ -4,4 +4,4 @@ node_modules
 !.env.example
 *.tsbuildinfo
 .DS_Store
-music/
+/music/

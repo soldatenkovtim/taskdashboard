@@ -27,12 +27,16 @@ import {
   Link2,
 } from "lucide-react";
 import type { Data, Task, Status } from "@/lib/types";
-import { statuses, overdue, date, initials } from "@/lib/types";
+import { statuses, overdue, date } from "@/lib/types";
 import { authAction } from "@/app/auth/actions";
 import { Overlay, TaskDrawer, TaskForm } from "./task-drawer";
 import ReactionPopup, { type ReactionInstance } from "./reaction-popup";
+import Avatar from "./avatar";
+import { avatars, validAvatar } from "@/lib/avatars";
+import MusicPlayer from "./music-player";
 import {
   adminReaction,
+  configFor,
   ReactionInbox,
   type ReactionConfig,
 } from "@/lib/reactions";
@@ -57,7 +61,13 @@ const notificationLabels: Record<string, string> = {
   accepted: "Задача принята",
   returned: "Задача возвращена на доработку",
 };
-export default function Dashboard({ setup = false }: { setup?: boolean }) {
+export default function Dashboard({
+  setup = false,
+  previewRole = "admin",
+}: {
+  setup?: boolean;
+  previewRole?: "admin" | "employee";
+}) {
   const [data, setData] = useState<Data | null>(null),
     [view, setView] = useState<View>("board"),
     [loading, setLoading] = useState(!setup),
@@ -89,10 +99,29 @@ export default function Dashboard({ setup = false }: { setup?: boolean }) {
       setReaction({
         id: ++reactionSerial.current,
         expiresAt:
-          Date.now() + Math.max(2000, Math.min(4000, config.durationMs)),
+          Date.now() + Math.max(3000, Math.min(6000, config.durationMs)),
         config,
       });
   }, []);
+  const visitRequest = useRef(false);
+  useEffect(() => {
+    if (
+      setup ||
+      !data ||
+      data.profile.access_status !== "active" ||
+      visitRequest.current
+    )
+      return;
+    visitRequest.current = true;
+    void fetch("/api/visit", { method: "POST" })
+      .then(async (response) => {
+        if (!response.ok) return;
+        const result = await response.json();
+        if (result.reward)
+          showReaction(configFor("visit_streak", data.profile.role));
+      })
+      .catch(() => {});
+  }, [setup, data, showReaction]);
   const clockOffset = useRef(0),
     mutationLock = useRef(false);
   const load = useCallback(async () => {
@@ -111,11 +140,7 @@ export default function Dashboard({ setup = false }: { setup?: boolean }) {
         clockOffset.current = Date.parse(value.serverNow) - Date.now();
       dataRef.current = value;
       const nextReaction = inbox.current.observe(value);
-      if (
-        !value.profile.playful_reactions ||
-        value.profile.access_status !== "active"
-      )
-        setReaction(null);
+      if (value.profile.access_status !== "active") setReaction(null);
       else showReaction(nextReaction);
       setData(value);
       setError("");
@@ -176,8 +201,37 @@ export default function Dashboard({ setup = false }: { setup?: boolean }) {
       setBusy(false);
     }
   };
-  async function savePreference(enabled: boolean) {
-    if (setup || !dataRef.current || mutationLock.current) return;
+  const [previewAvatar, setPreviewAvatar] = useState<string | null>(null);
+  useEffect(() => {
+    if (!setup) return;
+    try {
+      const saved = localStorage.getItem(
+        `kontur.preview.avatar.${previewRole}`,
+      );
+      setPreviewAvatar(validAvatar(saved) ? saved : null);
+    } catch {
+      setPreviewAvatar(null);
+    }
+  }, [setup, previewRole]);
+  async function saveAvatar(avatar_id: string | null) {
+    if (setup) {
+      setPreviewAvatar(avatar_id);
+      try {
+        if (avatar_id)
+          localStorage.setItem(
+            `kontur.preview.avatar.${previewRole}`,
+            avatar_id,
+          );
+        else localStorage.removeItem(`kontur.preview.avatar.${previewRole}`);
+        setPreferenceError("");
+      } catch {
+        setPreferenceError(
+          "Браузер запретил сохранение. Аватарка выбрана до перезагрузки.",
+        );
+      }
+      return;
+    }
+    if (!dataRef.current || mutationLock.current) return;
     mutationLock.current = true;
     setPreferenceBusy(true);
     setPreferenceError("");
@@ -186,31 +240,34 @@ export default function Dashboard({ setup = false }: { setup?: boolean }) {
       const response = await fetch("/api/preferences", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ enabled }),
+        body: JSON.stringify({ avatar_id }),
       });
       const value = await response.json();
       if (!response.ok) throw Error(value.error);
+      const current = dataRef.current;
       const updated = {
-        ...dataRef.current,
-        profile: {
-          ...dataRef.current.profile,
-          playful_reactions: value.enabled,
-        },
+        ...current,
+        profile: { ...current.profile, avatar_id: value.avatar_id },
+        profiles: current.profiles.map((p) =>
+          p.id === current.profile.id
+            ? { ...p, avatar_id: value.avatar_id }
+            : p,
+        ),
       };
       dataRef.current = updated;
-      inbox.current.observe(updated);
       setData(updated);
-      if (!value.enabled) setReaction(null);
     } catch (e) {
       setPreferenceError(
-        e instanceof Error ? e.message : "Не удалось сохранить настройку",
+        e instanceof Error ? e.message : "Не удалось сохранить аватар",
       );
     } finally {
-      mutationLock.current = false;
       setPreferenceBusy(false);
+      mutationLock.current = false;
     }
   }
-  const admin = setup || data?.profile.role === "admin",
+  const admin = setup
+      ? previewRole === "admin"
+      : data?.profile.role === "admin",
     tasks = data?.tasks ?? [],
     profiles = data?.profiles ?? [],
     pending = (data?.requests ?? []).filter((r) => r.status === "pending"),
@@ -356,9 +413,10 @@ export default function Dashboard({ setup = false }: { setup?: boolean }) {
             className="profile-button"
             onClick={() => setProfileOpen(true)}
           >
-            <span className="avatar">
-              {initials(data?.profile.name ?? "Ваш аккаунт")}
-            </span>
+            <Avatar
+              name={data?.profile.name ?? "Ваш аккаунт"}
+              avatar={setup ? previewAvatar : data?.profile.avatar_id}
+            />
             <span>
               <strong>{data?.profile.name ?? "Ваш аккаунт"}</strong>
               <small>{admin ? "Администратор" : "Сотрудник"}</small>
@@ -405,6 +463,7 @@ export default function Dashboard({ setup = false }: { setup?: boolean }) {
               {unread > 0 && <i />}
             </button>
           </div>
+          <MusicPlayer />
         </header>
         <main className="workspace">
           <div className="page-heading">
@@ -500,15 +559,35 @@ export default function Dashboard({ setup = false }: { setup?: boolean }) {
                 <Link2 size={17} />
               </span>
               <div>
-                <strong>Пространство готово к началу работы</strong>
+                <strong>
+                  Локальный предпросмотр —{" "}
+                  {admin ? "администратор" : "сотрудник"}
+                </strong>
                 <span>
-                  Подключите Supabase, чтобы пригласить команду и создать первую
-                  задачу.
+                  Это проверка интерфейса без входа и сохранения данных. Для
+                  работы с задачами подключите Supabase.
                 </span>
               </div>
               <button onClick={() => setSetupOpen(true)}>
                 Подключить <ArrowUpRight size={16} />
               </button>
+            </div>
+          )}
+          {setup && (
+            <div className="preview-switch">
+              <a href="/preview?role=admin">Предпросмотр администратора</a>
+              <a href="/preview?role=employee">Предпросмотр сотрудника</a>
+              <a href="/auth">К настоящему входу →</a>
+              {admin && (
+                <button
+                  className="outline"
+                  onClick={() =>
+                    showReaction(configFor("visit_streak", previewRole))
+                  }
+                >
+                  Показать награду за 8 дней
+                </button>
+              )}
             </div>
           )}
           {error && (
@@ -683,13 +762,19 @@ export default function Dashboard({ setup = false }: { setup?: boolean }) {
                               </button>
                               <footer>
                                 <span className="assignee">
-                                  <span className="avatar small">
-                                    {initials(
+                                  <Avatar
+                                    small
+                                    name={
                                       profiles.find(
                                         (p) => p.id === t.assignee_id,
-                                      )?.name ?? "Участник",
-                                    )}
-                                  </span>
+                                      )?.name ?? "Участник"
+                                    }
+                                    avatar={
+                                      profiles.find(
+                                        (p) => p.id === t.assignee_id,
+                                      )?.avatar_id
+                                    }
+                                  />
                                   {profiles
                                     .find((p) => p.id === t.assignee_id)
                                     ?.name.split(" ")[0] ?? "Участник"}
@@ -859,7 +944,7 @@ export default function Dashboard({ setup = false }: { setup?: boolean }) {
                     onTime = withDeadline.filter((t) => !t.completed_late);
                   return (
                     <div className="member-row" key={p.id}>
-                      <span className="avatar">{initials(p.name)}</span>
+                      <Avatar name={p.name} avatar={p.avatar_id} />
                       <button
                         className="member-name"
                         onClick={() => {
@@ -1004,35 +1089,58 @@ export default function Dashboard({ setup = false }: { setup?: boolean }) {
               {data?.profile.email ??
                 "Подключите Supabase для сохранения настроек профиля."}
             </p>
+            <fieldset
+              className="avatar-picker"
+              disabled={preferenceBusy || busy}
+            >
+              <legend>Ваша аватарка</legend>
+              <p>
+                {setup
+                  ? "В предпросмотре выбор сохраняется в этом браузере отдельно для каждой роли."
+                  : "Выберите портрет — он сохранится автоматически."}
+              </p>
+              <div className="avatar-options">
+                {[{ id: null, name: "Инициалы" }, ...avatars].map((option) => (
+                  <button
+                    type="button"
+                    key={option.id ?? "initials"}
+                    aria-label={option.name}
+                    aria-pressed={
+                      (setup
+                        ? previewAvatar
+                        : (data?.profile.avatar_id ?? null)) === option.id
+                    }
+                    onClick={() => void saveAvatar(option.id)}
+                  >
+                    <Avatar
+                      name={data?.profile.name ?? "Ваш аккаунт"}
+                      avatar={option.id}
+                    />
+                    <span>{option.name}</span>
+                  </button>
+                ))}
+              </div>
+              {preferenceBusy && <small role="status">Сохраняем…</small>}
+            </fieldset>
             <div className="reaction-preference">
               <div>
-                <strong>
-                  Playful reactions:{" "}
-                  {data?.profile.playful_reactions ? "ON" : "OFF"}
-                </strong>
+                <strong>Реакции включены</strong>
                 <p>
-                  Короткие игривые реакции на рабочие события. Только для вас,
-                  без звука.
+                  Автоматические реакции на рабочие события для всех участников.
                 </p>
               </div>
-              <button
-                type="button"
-                role="switch"
-                aria-label="Playful reactions"
-                aria-checked={data?.profile.playful_reactions === true}
-                disabled={setup || !data || preferenceBusy || busy}
-                className="reaction-switch"
-                onClick={() =>
-                  void savePreference(!data?.profile.playful_reactions)
-                }
-              >
-                <span />
-              </button>
             </div>
             <small>
-              По умолчанию выключено. Пока без анимаций — только текстовые
-              реакции.
+              При уменьшении движения в настройках устройства — только текст.
             </small>
+            {admin && (
+              <a
+                className="outline"
+                href={setup ? "/reactions?preview=admin" : "/reactions"}
+              >
+                Посмотреть все реакции
+              </a>
+            )}
             {preferenceError && (
               <p className="error" role="alert">
                 {preferenceError}

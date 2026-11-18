@@ -1,0 +1,113 @@
+[
+  {
+    "slug": "good-job",
+    "title": "GOOD JOB, BABY.",
+    "columns": 6,
+    "rows": 4,
+    "posterFrame": 16,
+    "prompt": "Edit using the attached image as the SINGLE mandatory identity and style reference. This exact adult woman, age 30: identical facial structure, nose, almond eyes, cheek beauty mark, red lip shape, waved black bob and hair part. Preserve her identity in every frame. Preserve cinematic vintage black-and-white noir, deep chiaroscuro, restrained fine grain, only crimson lips in color. Mature elegant Hollywood femme fatale; NOT cartoon, NOT pinup, NOT anime, no pink or gold. Create a production animation sprite sheet with EXACTLY 24 equal-sized frames, SIX columns by FOUR rows, read left to right then top to bottom. Entire canvas is the exact grid, NO gutters, NO frame borders, NO text or labels. One continuous action with meaningful intermediate hand, head, shoulder, mouth poses in EVERY cell. Fixed camera and static dark stage; motion from the WOMAN, not camera pans or zoom. Frame waist-up with room above head and both hands always within panel. Anatomically correct hands. Square individual cells. Target full sheet 3072x2048. Frame progression is temporally coherent, no cuts, no duplicate static portraits. GOOD JOB BABY: frames 1-4 she begins with a genuinely playful smile, shoulders relax and leans physically toward viewer; 5-8 smile grows and one eye closes then opens in a wink; 9-13 her right gloved hand rises naturally toward her mouth, fingers together, lips purse; 14-18 fingertips touch lips then hand sweeps away toward viewer as she blows a kiss; 19-22 hand extends palm upward, open fingers, teasing warm smile and slight head tilt; 23-24 settled smiling final pose. Hands must move visibly across sequential frames. She wears the same opaque black high-neck evening dress and gloves. No floating hearts.",
+    "durationMs": 4100,
+    "frames": 24
+  },
+  {
+    "slug": "make-them-work",
+    "title": "MAKE THEM WORK.",
+    "columns": 6,
+    "rows": 4,
+    "posterFrame": 21,
+    "prompt": "Use the attached image as the ONE mandatory identity and style reference. Transform into a 24-frame animation sheet of THIS EXACT adult woman, age 30, not a new actor. Preserve facial features, nose, lips, almond eyes, cheek beauty mark, waved black bob, hair part, proportions and age. Same cinematic vintage monochrome noir, deep chiaroscuro, film grain, only red lips in color. Elegant mischievous Hollywood femme fatale, warm playful expressive face. NOT a cartoon, anime or pinup; no pink, neon, hearts, gold, text, numbers. EXACT grid SIX columns by FOUR rows, 24 equal square panels, row-major chronological order. Full-bleed grid without borders, gutters or labels. Target 3072x2048. Fixed waist-up camera with headroom and room for moving hands. Action performed by woman, NEVER camera zoom/pan. Each cell is next physical intermediate pose in one coherent action, smooth anatomical hand/arm/head motion, expressive face. Identical camera and background across every cell; movement across frames must be evident. 1-4: sly smile, she picks up black sunglasses with her right gloved hand; 5-10: smoothly raises sunglasses to face, both temples approach ears; 11-14: puts glasses on and settles them at bridge of nose; 15-20: lowers hand then playfully points her index finger toward viewer, thumb up, other fingers curled naturally; 21-24: holds pointing gesture and broad teasing red-lipped smile. Opaque black dress and opera gloves.",
+    "durationMs": 4100,
+    "frames": 24
+  },
+  {
+    "slug": "youre-the-boss",
+    "title": "YOU'RE THE BOSS.",
+    "columns": 6,
+    "rows": 4,
+    "posterFrame": 15,
+    "prompt": "Use the attached image as the ONE mandatory identity and style reference. Transform into a 24-frame animation sheet of THIS EXACT adult woman, age 30, not a new actor. Preserve facial features, nose, lips, almond eyes, cheek beauty mark, waved black bob, hair part, proportions and age. Same cinematic vintage monochrome noir, deep chiaroscuro, film grain, only red lips in color. Elegant mischievous Hollywood femme fatale, warm playful expressive face. NOT a cartoon, anime or pinup; no pink, neon, hearts, gold, text, numbers. EXACT grid SIX columns by FOUR rows, 24 equal square panels, row-major chronological order. Full-bleed grid without borders, gutters or labels. Target 3072x2048. Fixed waist-up camera with headroom and room for moving hands. Action performed by woman, NEVER camera zoom/pan. Each cell is next physical intermediate pose in one coherent action, smooth anatomical hand/arm/head motion, expressive face. Identical camera and background across every cell; movement across frames must be evident. 1-4: confident warm smile; 5-8: one eye closes and opens in a wink as shoulders lean physically toward viewer; 9-14: right gloved hand rises to lips, lips purse; 15-20: palm moves away from lips and opens toward viewer in a blown kiss; 21-24: coy smile and chin tilt, hand lowers. Opaque black high-neck evening dress.",
+    "durationMs": 4100,
+    "frames": 24
+  },
+  {
+    "slug": "how-generous",
+    "title": "HOW GENEROUS OF YOU.",
+    "columns": 6,
+    "rows": 4,
+    "posterFrame": 10,
+    "prompt": "Use the attached image as the ONE mandatory identity and style reference. Transform into a 24-frame animation sheet of THIS EXACT adult woman, age 30, not a new actor. Preserve facial features, nose, lips, almond eyes, cheek beauty mark, waved black bob, hair part, proportions and age. Same cinematic vintage monochrome noir, deep chiaroscuro, film grain, only red lips in color. Elegant mischievous Hollywood femme fatale, warm playful expressive face. NOT a cartoon, anime or pinup; no pink, neon, hearts, gold, text, numbers. EXACT grid SIX columns by FOUR rows, 24 equal square panels, row-major chronological order. Full-bleed grid without borders, gutters or labels. Target 3072x2048. Fixed waist-up camera with headroom and room for moving hands. Action performed by woman, NEVER camera zoom/pan. Each cell is next physical intermediate pose in one coherent action, smooth anatomical hand/arm/head motion, expressive face. Identical camera and background across every cell; movement across frames must be evident. 1-4: playful interested gaze; 5-9: eyebrows lift in theatrical surprise, mouth opens a little, gloved right hand moves to upper chest; 10-14: fingers spread on chest, shoulders lift in mock astonishment; 15-20: shoulders drop, lips close into knowing ironic smile, head tilts gently; 21-24: amused half-smile, hand lowers slowly. Opaque black dress.",
+    "durationMs": 4100,
+    "frames": 24
+  },
+  {
+    "slug": "another-one-done",
+    "title": "ANOTHER ONE DONE.",
+    "columns": 6,
+    "rows": 4,
+    "posterFrame": 10,
+    "prompt": "Use the attached image as the ONE mandatory identity and style reference. Transform into a 24-frame animation sheet of THIS EXACT adult woman, age 30, not a new actor. Preserve facial features, nose, lips, almond eyes, cheek beauty mark, waved black bob, hair part, proportions and age. Same cinematic vintage monochrome noir, deep chiaroscuro, film grain, only red lips in color. Elegant mischievous Hollywood femme fatale, warm playful expressive face. NOT a cartoon, anime or pinup; no pink, neon, hearts, gold, text, numbers. EXACT grid SIX columns by FOUR rows, 24 equal square panels, row-major chronological order. Full-bleed grid without borders, gutters or labels. Target 3072x2048. Fixed waist-up camera with headroom and room for moving hands. Action performed by woman, NEVER camera zoom/pan. Each cell is next physical intermediate pose in one coherent action, smooth anatomical hand/arm/head motion, expressive face. Identical camera and background across every cell; movement across frames must be evident. 1-3: happy satisfied smile, hands rising to chest; 4-6: palms move together for first slow clap; 7-9: hands separate; 10-12: second gentle clap; 13-15: hands separate, right hand moves to lips; 16-18: pursed red lips kiss fingertips; 19-22: right palm opens and moves toward viewer blowing a kiss; 23-24: playful pleased smile. Opaque black high-neck dress and opera gloves.",
+    "durationMs": 4100,
+    "frames": 24
+  },
+  {
+    "slug": "not-good-enough",
+    "title": "NOT GOOD ENOUGH.",
+    "columns": 6,
+    "rows": 4,
+    "posterFrame": 16,
+    "prompt": "Use the attached image as the ONE mandatory identity and style reference. Transform into a 24-frame animation sheet of THIS EXACT adult woman, age 30, not a new actor. Preserve facial features, nose, lips, almond eyes, cheek beauty mark, waved black bob, hair part, proportions and age. Same cinematic vintage monochrome noir, deep chiaroscuro, film grain, only red lips in color. Elegant mischievous Hollywood femme fatale, warm playful expressive face. NOT a cartoon, anime or pinup; no pink, neon, hearts, gold, text, numbers. EXACT grid SIX columns by FOUR rows, 24 equal square panels, row-major chronological order. Full-bleed grid without borders, gutters or labels. Target 3072x2048. Fixed waist-up camera with headroom and room for moving hands. Action performed by woman, NEVER camera zoom/pan. Each cell is next physical intermediate pose in one coherent action, smooth anatomical hand/arm/head motion, expressive face. Identical camera and background across every cell; movement across frames must be evident. 1-4: theatrical eyes roll upward, mouth gives a little exasperated pout; 5-10: head shakes gently left then right, eyes return to viewer; 11-15: raises right index finger, other fingers curled; 16-20: wags index finger side-to-side in humorous admonishment, mischievous smile grows; 21-24: teasing smirk and raised eyebrow. Not angry, funny and flirtatious. Black opaque dress and gloves.",
+    "durationMs": 4100,
+    "frames": 24
+  },
+  {
+    "slug": "right-on-time",
+    "title": "RIGHT ON TIME.",
+    "columns": 6,
+    "rows": 4,
+    "posterFrame": 22,
+    "prompt": "Use case: precise-object-edit / identity-preserve. Edit the attached animation sprite sheet. Preserve EXACT 6 columns by 4 rows, 24 equal square cells, same chronological poses, camera framing, same adult woman's face, waved black bob, expressions, lipstick, gray outer T-shirt removal motion, background and noir grain. Change ONLY her underlying garment in EVERY frame: replace the black high-neck halter dress/costume with a clearly separate opaque RED TANK TOP with two shoulder straps and a modest square neckline. Her neck and collarbones should be bare; absolutely NO black collar, NO halter neck, NO dress, NO black garment underneath. The red tank top is ordinary fitted outerwear, not lingerie, no lace, fully covers breasts and torso, with wide shoulder straps. Match tank-top fabric hue precisely to her deep cherry-red lipstick, sufficiently illuminated to read unmistakably red, not black. Gray T-shirt is still worn over this red tank top in the beginning, gradually lifted over her head, then removed, leaving this same red tank top on throughout the later frames. Maintain the original hand movement, hair smoothing and final wink in frame 23. The tank top is red wherever revealed in frames 4 through 24. Otherwise scene monochrome; only lips and tank top red. Full bleed identical regular 6x4 grid without borders/gutters/text. Preserve original sheet dimensions 1536x1024.",
+    "durationMs": 4100,
+    "frames": 24,
+    "previousPrompt": "Use the attached image as the ONE mandatory identity and style reference. Transform into a 24-frame animation sheet of THIS EXACT adult woman, age 30, not a new actor. Preserve facial features, nose, lips, almond eyes, cheek beauty mark, waved black bob, hair part, proportions and age. Same cinematic vintage monochrome noir, deep chiaroscuro, film grain, only red lips in color. Elegant mischievous Hollywood femme fatale, warm playful expressive face. NOT a cartoon, anime or pinup; no pink, neon, hearts, gold, text, numbers. EXACT grid SIX columns by FOUR rows, 24 equal square panels, row-major chronological order. Full-bleed grid without borders, gutters or labels. Target 3072x2048. Fixed waist-up camera with headroom and room for moving hands. Action performed by woman, NEVER camera zoom/pan. Each cell is next physical intermediate pose in one coherent action, smooth anatomical hand/arm/head motion, expressive face. Identical camera and background across every cell; movement across frames must be evident. Frame waist-up with enough overhead space for arms throughout. SAME reference woman wearing a loose LIGHT GRAY T-SHIRT OVER a fully opaque BLACK HIGH-NECK SLEEVELESS TOP covering entire chest, breasts and torso. 1-3 sly smile, both hands grasp lower hem of light outer t-shirt; 4-8 lifts outer shirt over torso revealing the already present black top, which stays fixed and fully covering body; 9-13 pulls light shirt up over face and crown of head, elbows raised, continuous cloth motion; 14-17 slips shirt completely off head and arms, holds removed shirt at side. Black top remains entirely opaque and covering chest throughout; NO nudity, NO bra, NO lingerie, NO exposed breast or intimate body parts. 18-21 sets shirt aside and smooths her original waved black bob with one hand; 22-24 gives a playful wink and smile. Preserve identity after temporary fabric occlusion."
+  },
+  {
+    "slug": "youre-late",
+    "title": "YOU'RE LATE, HONEY.",
+    "columns": 6,
+    "rows": 4,
+    "posterFrame": 4,
+    "prompt": "Use the attached image as the ONE mandatory identity and style reference. Transform into a 24-frame animation sheet of THIS EXACT adult woman, age 30, not a new actor. Preserve facial features, nose, lips, almond eyes, cheek beauty mark, waved black bob, hair part, proportions and age. Same cinematic vintage monochrome noir, deep chiaroscuro, film grain, only red lips in color. Elegant mischievous Hollywood femme fatale, warm playful expressive face. NOT a cartoon, anime or pinup; no pink, neon, hearts, gold, text, numbers. EXACT grid SIX columns by FOUR rows, 24 equal square panels, row-major chronological order. Full-bleed grid without borders, gutters or labels. Target 3072x2048. Fixed waist-up camera with headroom and room for moving hands. Action performed by woman, NEVER camera zoom/pan. Each cell is next physical intermediate pose in one coherent action, smooth anatomical hand/arm/head motion, expressive face. Identical camera and background across every cell; movement across frames must be evident. 1-5: raises left wrist with small silver wristwatch, looks down at watch; 6-10: turns eyes and face back to viewer, eyebrows rise; 11-15: theatrical sigh, chest and shoulders rise then fall, lips briefly part; 16-20: rolls eyes upward then to side with ironic disappointment; 21-24: returns to viewer with a knowing teasing smile, wrist lowers. Opaque black high-neck dress and gloves.",
+    "durationMs": 4100,
+    "frames": 24
+  },
+  {
+    "slug": "try-again",
+    "title": "TRY AGAIN, DARLING.",
+    "columns": 6,
+    "rows": 4,
+    "posterFrame": 16,
+    "prompt": "Use the attached image as the ONE mandatory identity and style reference. Transform into a 24-frame animation sheet of THIS EXACT adult woman, age 30, not a new actor. Preserve facial features, nose, lips, almond eyes, cheek beauty mark, waved black bob, hair part, proportions and age. Same cinematic vintage monochrome noir, deep chiaroscuro, film grain, only red lips in color. Elegant mischievous Hollywood femme fatale, warm playful expressive face. NOT a cartoon, anime or pinup; no pink, neon, hearts, gold, text, numbers. EXACT grid SIX columns by FOUR rows, 24 equal square panels, row-major chronological order. Full-bleed grid without borders, gutters or labels. Target 3072x2048. Fixed waist-up camera with headroom and room for moving hands. Action performed by woman, NEVER camera zoom/pan. Each cell is next physical intermediate pose in one coherent action, smooth anatomical hand/arm/head motion, expressive face. Identical camera and background across every cell; movement across frames must be evident. 1-4: amused mocking smile; 5-10: gently shakes head left then right while maintaining soft playful gaze; 11-14: raises right hand with palm toward herself, index finger extended toward viewer; 15-20: slowly curls and extends index finger twice in a clearly visible beckoning come-closer gesture; 21-24: head tilts and smile becomes inviting and teasing. Black opaque high-neck dress and gloves.",
+    "durationMs": 4100,
+    "frames": 24
+  },
+  {
+    "slug": "its-a-date",
+    "title": "IT'S A DATE.",
+    "columns": 6,
+    "rows": 4,
+    "posterFrame": 19,
+    "prompt": "Use the attached image as the ONE mandatory identity and style reference. Transform into a 24-frame animation sheet of THIS EXACT adult woman, age 30, not a new actor. Preserve facial features, nose, lips, almond eyes, cheek beauty mark, waved black bob, hair part, proportions and age. Same cinematic vintage monochrome noir, deep chiaroscuro, film grain, only red lips in color. Elegant mischievous Hollywood femme fatale, warm playful expressive face. NOT a cartoon, anime or pinup; no pink, neon, hearts, gold, text, numbers. EXACT grid SIX columns by FOUR rows, 24 equal square panels, row-major chronological order. Full-bleed grid without borders, gutters or labels. Target 3072x2048. Fixed waist-up camera with headroom and room for moving hands. Action performed by woman, NEVER camera zoom/pan. Each cell is next physical intermediate pose in one coherent action, smooth anatomical hand/arm/head motion, expressive face. Identical camera and background across every cell; movement across frames must be evident. 1-4: playful eye contact and small smile; 5-9: raises right hand to waved hair by her temple; 10-15: gently brushes a lock back and smooths the SAME bob, fingers slide along hair; 16-19: hand lowers as head tilts coyly; 20-22: gives an unmistakable wink; 23-24: opens eye and finishes with warm flirtatious red-lipped smile. Black opaque high-neck dress and gloves.",
+    "durationMs": 4100,
+    "frames": 24
+  },
+  {
+    "slug": "what-a-good-boss",
+    "title": "WHAT A GOOD BOSS.",
+    "columns": 6,
+    "rows": 4,
+    "posterFrame": 19,
+    "prompt": "Use the attached image as the ONE mandatory identity and style reference. Transform into a 24-frame animation sheet of THIS EXACT adult woman, age 30, not a new actor. Preserve facial features, nose, lips, almond eyes, cheek beauty mark, waved black bob, hair part, proportions and age. Same cinematic vintage monochrome noir, deep chiaroscuro, film grain, only red lips in color. Elegant mischievous Hollywood femme fatale, warm playful expressive face. NOT a cartoon, anime or pinup; no pink, neon, hearts, gold, text, numbers. EXACT grid SIX columns by FOUR rows, 24 equal square panels, row-major chronological order. Full-bleed grid without borders, gutters or labels. Target 3072x2048. Fixed waist-up camera with headroom and room for moving hands. Action performed by woman, NEVER camera zoom/pan. Each cell is next physical intermediate pose in one coherent action, smooth anatomical hand/arm/head motion, expressive face. Identical camera and background across every cell; movement across frames must be evident. Wider fixed camera, seated woman initially shown knees-up in an armchair, full headroom maintained. Same reference woman and opaque black evening dress. 1-5: places hands on chair armrests, shifts torso forward and starts to stand; 6-10: rises to standing; 11-15: takes one small step toward camera and leans forward herself (camera static); 16-18: winks and raises right hand to pursed lips; 19-22: blows expressive kiss by extending open palm toward viewer; 23-24: happy teasing smile. Must show actual standing and stepping, no camera zoom.",
+    "durationMs": 4100,
+    "frames": 24
+  }
+]
