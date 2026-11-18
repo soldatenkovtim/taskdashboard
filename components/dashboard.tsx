@@ -463,7 +463,11 @@ export default function Dashboard({
               {unread > 0 && <i />}
             </button>
           </div>
-          <MusicPlayer />
+          <MusicPlayer
+            autoplayKey={
+              !setup && data?.profile.id ? `login.${data.profile.id}` : undefined
+            }
+          />
         </header>
         <main className="workspace">
           <div className="page-heading">

@@ -1,7 +1,39 @@
 "use client";
-import { useState } from "react";
-import { ArrowUpRight, ArrowRight } from "lucide-react";
+import { useId, useState, type InputHTMLAttributes } from "react";
+import { ArrowUpRight, ArrowRight, Eye, EyeOff } from "lucide-react";
 import { authAction } from "@/app/auth/actions";
+
+function PasswordField({
+  label,
+  ...props
+}: InputHTMLAttributes<HTMLInputElement> & { label: string }) {
+  const id = useId();
+  const [visible, setVisible] = useState(false);
+  const toggleLabel = visible ? "Скрыть пароль" : "Показать пароль";
+  return (
+    <div className="auth-password-field">
+      <label htmlFor={id}>{label}</label>
+      <div className="auth-password-input">
+        <input {...props} id={id} type={visible ? "text" : "password"} />
+        <button
+          type="button"
+          className="auth-password-toggle"
+          aria-label={`${toggleLabel}: ${label.toLowerCase()}`}
+          aria-controls={id}
+          title={toggleLabel}
+          onClick={() => setVisible((value) => !value)}
+        >
+          {visible ? (
+            <EyeOff size={18} aria-hidden="true" />
+          ) : (
+            <Eye size={18} aria-hidden="true" />
+          )}
+        </button>
+      </div>
+    </div>
+  );
+}
+
 export default function AuthForm({
   initialMode,
   callbackError,
@@ -141,31 +173,27 @@ export default function AuthForm({
                 </label>
               )}
               {mode !== "reset" && (
-                <label>
-                  Пароль
-                  <input
-                    name="password"
-                    type="password"
-                    required
-                    minLength={mode === "login" ? 1 : 8}
-                    autoComplete={
-                      mode === "login" ? "current-password" : "new-password"
-                    }
-                    placeholder="Не менее 8 символов"
-                  />
-                </label>
+                <PasswordField
+                  key={mode}
+                  label="Пароль"
+                  name="password"
+                  required
+                  minLength={mode === "login" ? 1 : 8}
+                  autoComplete={
+                    mode === "login" ? "current-password" : "new-password"
+                  }
+                  placeholder="Не менее 8 символов"
+                />
               )}
               {(mode === "signup" || mode === "update") && (
-                <label>
-                  Повторите пароль
-                  <input
-                    name="confirm"
-                    type="password"
-                    required
-                    minLength={8}
-                    autoComplete="new-password"
-                  />
-                </label>
+                <PasswordField
+                  key={`${mode}-confirm`}
+                  label="Повторите пароль"
+                  name="confirm"
+                  required
+                  minLength={8}
+                  autoComplete="new-password"
+                />
               )}
               {error && (
                 <p className="error" role="alert">
