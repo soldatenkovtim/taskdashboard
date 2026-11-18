@@ -31,7 +31,7 @@ async function mutate(
 }
 async function create(
   title = "Тестовая задача",
-  deadline: string | null = null,
+  deadline: string | null = "2030-01-01T12:00:00Z",
 ) {
   return (await action("create", { title, assignee_id: employee, deadline }))
     .id;
@@ -46,6 +46,9 @@ before(async () => {
   );
   await db.exec(
     readFileSync("supabase/migrations/003_profile_avatars.sql", "utf8"),
+  );
+  await db.exec(
+    readFileSync("supabase/migrations/006_required_task_deadline.sql", "utf8"),
   );
   for (const [id, name] of [
     [admin, "Админ"],
@@ -285,7 +288,19 @@ test("Блокировка отбирает чтение и операции; у
 test("Задачи без срока и принятые в срок не помечаются опоздавшими", async () => {
   await identity(admin);
   for (const deadline of [null, "2030-01-01T12:00:00Z"]) {
-    const id = await create("Вовремя", deadline);
+    const id = await create("Вовремя");
+    if (deadline === null) {
+      // Represent a legacy task created before migration 006.
+      await db.exec("reset role");
+      try {
+        await db.query(
+          "update public.tasks set deadline=null, original_deadline=null where id=$1",
+          [id],
+        );
+      } finally {
+        await db.exec("set role authenticated");
+      }
+    }
     await mutate(id, "status", { status: "progress" });
     await mutate(id, "status", { status: "review" });
     await mutate(id, "status", { status: "done" });
@@ -446,4 +461,110 @@ test("Посещения: 8-й день, без повторов, пропуск
     () => db.query("select public.record_visit()"),
     /Войдите/,
   );
+});
+
+test("Создание без дедлайна запрещено для обеих ролей и не оставляет записей", async () => {
+  for (const user of [admin, employee]) {
+    await identity(user);
+    const before = (await db.query("select id from public.tasks")).rows.length;
+    for (const deadline of [
+      undefined,
+      null,
+      "",
+      "   ",
+      "infinity",
+      "-infinity",
+    ]) {
+      await assert.rejects(
+        () =>
+          action("create", {
+            title: "Без срока",
+            assignee_id: employee,
+            deadline,
+          }),
+        /Укажите дату и время дедлайна/,
+      );
+    }
+    await assert.rejects(() =>
+      action("create", {
+        title: "Некорректный срок",
+        assignee_id: employee,
+        deadline: "invalid",
+      }),
+    );
+    assert.equal(
+      (await db.query("select id from public.tasks")).rows.length,
+      before,
+    );
+  }
+});
+
+test("Посещения: 16 дней, прерывание длинной серии и отсутствие повторов", async () => {
+  await db.exec("reset role");
+  await db.exec(
+    readFileSync("supabase/migrations/007_visit_streak_sixteen.sql", "utf8"),
+  );
+  const visit = async () =>
+    (await db.query<any>("select public.record_visit() as result")).rows[0]
+      .result;
+  for (const user of [admin, employee]) {
+    for (const [streak, ago, days, reaction] of [
+      [15, 1, 16, "visit_streak_16"],
+      [16, 1, 17, null],
+      [16, 2, 1, "visit_streak_broken"],
+      [25, 5, 1, "visit_streak_broken"],
+      [15, 2, 1, null],
+      [0, null, 1, null],
+      [7, 1, 8, null],
+    ] as const) {
+      await db.exec("reset role");
+      await db.query(
+        "update public.profiles set visit_streak=$2,last_visit_day=(now() at time zone 'Europe/Moscow')::date-$3::integer where id=$1",
+        [user, streak, ago],
+      );
+      await db.exec("set role authenticated");
+      await identity(user);
+      assert.deepEqual(await visit(), { days, reward: days === 8, reaction });
+      assert.deepEqual(await visit(), { days, reward: false });
+    }
+  }
+  await identity(pending);
+  await assert.rejects(visit, /Нет доступа/);
+  await identity("");
+  await assert.rejects(visit, /Войдите/);
+});
+
+test("Прерывание 8–15 дней: отдельная реакция, без повторов", async () => {
+  await db.exec("reset role");
+  await db.exec(
+    readFileSync(
+      "supabase/migrations/008_visit_streak_eight_broken.sql",
+      "utf8",
+    ),
+  );
+  for (const user of [admin, employee]) {
+    for (const streak of [7, 8, 15, 16, 20]) {
+      await db.exec("reset role");
+      await db.query(
+        "update public.profiles set visit_streak=$2,last_visit_day=(now() at time zone 'Europe/Moscow')::date-2 where id=$1",
+        [user, streak],
+      );
+      await db.exec("set role authenticated");
+      await identity(user);
+      const visit = async () =>
+        (await db.query<any>("select public.record_visit() as result")).rows[0]
+          .result;
+      assert.deepEqual(await visit(), {
+        days: 1,
+        reward: false,
+        reaction:
+          streak >= 16
+            ? "visit_streak_broken"
+            : streak >= 8
+              ? "visit_streak_8_broken"
+              : null,
+      });
+      assert.deepEqual(await visit(), { days: 1, reward: false });
+    }
+  }
 });

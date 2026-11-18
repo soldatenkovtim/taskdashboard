@@ -181,7 +181,21 @@ test("Поддерживаются только локальные GIF/WebP/MP4/
         r.durationMs <= 6000,
     ),
   );
-  assert.equal(reactionConfig.length, 14);
+  assert.equal(reactionConfig.length, 20);
+  for (const audience of ["admin", "employee"]) {
+    assert.equal(
+      reactionConfig.find(
+        (r) => r.event === "visit_streak_16" && r.audience === audience,
+      )?.mediaPath,
+      "/reactions/sixteen-days.gif",
+    );
+    assert.equal(
+      reactionConfig.find(
+        (r) => r.event === "visit_streak_broken" && r.audience === audience,
+      )?.mediaPath,
+      "/reactions/streak-broken.gif",
+    );
+  }
 });
 
 test("Все GIF существуют, содержат разные кадры и укладываются в лимит размера", async () => {
@@ -193,6 +207,9 @@ test("Все GIF существуют, содержат разные кадры 
     const imported = [
       "/reactions/over-ten.gif",
       "/reactions/eight-days.gif",
+      "/reactions/eight-days-broken.gif",
+      "/reactions/sixteen-days.gif",
+      "/reactions/streak-broken.gif",
     ].includes(config.mediaPath!);
     assert.ok(bytes.size < (imported ? 6 : 2) * 1024 * 1024, config.title);
     const metadata = await sharp(file.pathname, { animated: true }).metadata();
