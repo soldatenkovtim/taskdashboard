@@ -5,7 +5,10 @@ import ReactionPopup, {
   type ReactionInstance,
 } from "@/components/reaction-popup";
 const labels: Record<ReactionEvent, string> = {
+  visit_streak_8_broken: "Прервана серия из 8–15 дней",
   visit_streak: "8 дней подряд с нами",
+  visit_streak_16: "16 дней подряд с нами",
+  visit_streak_broken: "Возвращение после прерывания серии из 16+ дней",
   tasks_created_milestone: "Поставлено 10 задач за 3 дня",
   tasks_completed_milestone: "Выполнено 10 задач за 3 дня",
   task_created: "Задача создана",

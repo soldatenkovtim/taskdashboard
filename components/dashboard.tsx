@@ -117,7 +117,13 @@ export default function Dashboard({
       .then(async (response) => {
         if (!response.ok) return;
         const result = await response.json();
-        if (result.reward)
+        if (
+          result.reaction === "visit_streak_16" ||
+          result.reaction === "visit_streak_broken" ||
+          result.reaction === "visit_streak_8_broken"
+        )
+          showReaction(configFor(result.reaction, data.profile.role));
+        else if (result.reward)
           showReaction(configFor("visit_streak", data.profile.role));
       })
       .catch(() => {});
@@ -465,7 +471,9 @@ export default function Dashboard({
           </div>
           <MusicPlayer
             autoplayKey={
-              !setup && data?.profile.id ? `login.${data.profile.id}` : undefined
+              !setup && data?.profile.id
+                ? `login.${data.profile.id}`
+                : undefined
             }
           />
         </header>

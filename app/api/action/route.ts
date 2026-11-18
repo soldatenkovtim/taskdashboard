@@ -23,6 +23,16 @@ export async function POST(req: NextRequest) {
   } catch {
     return NextResponse.json({ error: "Некорректный запрос" }, { status: 400 });
   }
+  if (
+    body?.action === "create" &&
+    (typeof body.payload?.deadline !== "string" ||
+      !body.payload.deadline.trim() ||
+      !Number.isFinite(Date.parse(body.payload.deadline)))
+  )
+    return NextResponse.json(
+      { error: "Укажите дату и время дедлайна" },
+      { status: 400 },
+    );
   const { data, error } = await db.rpc("task_action", {
     action: body.action,
     payload: body.payload ?? {},

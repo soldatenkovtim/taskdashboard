@@ -13,6 +13,7 @@ import {
   ArrowUpRight,
 } from "lucide-react";
 import Avatar from "./avatar";
+import { TaskSelect, TaskDateTime } from "./task-fields";
 import ReactMarkdown from "react-markdown";
 import type { Data, Task } from "@/lib/types";
 import { statuses, overdue, date, eventLabels } from "@/lib/types";
@@ -141,43 +142,37 @@ export function TaskForm({
       </label>
       <div className="form-grid">
         {admin && (
-          <label>
-            Исполнитель <span>*</span>
-            <select
-              name="assignee_id"
-              required
-              defaultValue={task?.assignee_id ?? data.profile.id}
-            >
-              {data.profiles
-                .filter((p) => p.access_status === "active")
-                .map((p) => (
-                  <option value={p.id} key={p.id}>
-                    {p.name}
-                  </option>
-                ))}
-            </select>
-          </label>
+          <TaskSelect
+            label="Исполнитель *"
+            name="assignee_id"
+            defaultValue={task?.assignee_id ?? data.profile.id}
+            options={data.profiles
+              .filter((p) => p.access_status === "active")
+              .map((p) => ({ value: p.id, label: p.name }))}
+          />
         )}
-        <label>
-          Приоритет
-          <select name="priority" defaultValue={task?.priority ?? "medium"}>
-            <option value="low">Низкий</option>
-            <option value="medium">Обычный</option>
-            <option value="high">Высокий</option>
-          </select>
-        </label>
+        <TaskSelect
+          label="Приоритет"
+          name="priority"
+          defaultValue={task?.priority ?? "medium"}
+          options={[
+            { value: "low", label: "Низкий" },
+            { value: "medium", label: "Обычный" },
+            { value: "high", label: "Высокий" },
+          ]}
+        />
       </div>
       {!task && (
-        <label>
-          {admin ? "Дедлайн" : "Предложить дедлайн"}
-          <input type="datetime-local" name="deadline" />
-          <small>
-            Время по Москве.{" "}
-            {admin
-              ? "Можно оставить без срока."
-              : "Срок станет официальным после согласования."}
-          </small>
-        </label>
+        <TaskDateTime
+          label={admin ? "Дедлайн *" : "Предложить дедлайн *"}
+          required
+          name="deadline"
+          hint={
+            admin
+              ? "Укажите дату и время по Москве."
+              : "Время по Москве. Срок станет официальным после согласования."
+          }
+        />
       )}
       {error && (
         <p className="error" role="alert">
@@ -418,15 +413,12 @@ export function TaskDrawer({
                 });
               }}
             >
-              <label>
-                Предложенная или другая дата
-                <input
-                  name="deadline"
-                  type="datetime-local"
-                  defaultValue={localInput(request.proposed_deadline)}
-                  required
-                />
-              </label>
+              <TaskDateTime
+                label="Предложенная или другая дата"
+                name="deadline"
+                defaultValue={localInput(request.proposed_deadline)}
+                required
+              />
               <div className="form-actions">
                 <button
                   className="outline"
@@ -473,15 +465,12 @@ export function TaskDrawer({
               setDeadlineForm(false);
           }}
         >
-          <label>
-            Новый срок · по Москве
-            <input
-              name="deadline"
-              type="datetime-local"
-              required
-              defaultValue={localInput(t.deadline)}
-            />
-          </label>
+          <TaskDateTime
+            label="Новый срок · по Москве"
+            name="deadline"
+            defaultValue={localInput(t.deadline)}
+            required
+          />
           {!admin && (
             <label>
               Причина {t.deadline ? "*" : "(необязательно)"}

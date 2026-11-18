@@ -1,6 +1,9 @@
 import type { Data, Task } from "./types";
 export type ReactionEvent =
   | "visit_streak"
+  | "visit_streak_16"
+  | "visit_streak_broken"
+  | "visit_streak_8_broken"
   | "task_created"
   | "task_assigned"
   | "task_accepted"
@@ -26,6 +29,29 @@ export const reactionConfig: ReactionConfig[] = [
     mediaPath: "/reactions/eight-days.gif",
     durationMs: 5600,
   })),
+  ...(["admin", "employee"] as const).flatMap((audience) => [
+    {
+      event: "visit_streak_8_broken" as const,
+      audience,
+      title: "STREAK IS OVER",
+      mediaPath: "/reactions/eight-days-broken.gif",
+      durationMs: 5600,
+    },
+    {
+      event: "visit_streak_16" as const,
+      audience,
+      title: "SIXTEEN DAYS. STILL YOURS.",
+      mediaPath: "/reactions/sixteen-days.gif",
+      durationMs: 5600,
+    },
+    {
+      event: "visit_streak_broken" as const,
+      audience,
+      title: "MISSED YOU. START AGAIN?",
+      mediaPath: "/reactions/streak-broken.gif",
+      durationMs: 5600,
+    },
+  ]),
   {
     event: "tasks_created_milestone",
     audience: "admin",
