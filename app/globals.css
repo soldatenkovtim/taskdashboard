@@ -1739,6 +1739,35 @@ nav button:hover {
   padding: 13px;
   font-size: 12px;
 }
+.auth-password-field {
+  margin-bottom: 20px;
+}
+.auth-password-field label {
+  margin-bottom: 9px;
+}
+.auth-password-input {
+  position: relative;
+}
+.auth-password-input input {
+  width: 100%;
+  padding-right: 48px;
+}
+.auth-password-toggle {
+  position: absolute;
+  right: 2px;
+  top: 2px;
+  bottom: 2px;
+  width: 42px;
+  display: grid;
+  place-items: center;
+  color: var(--muted);
+}
+.auth-password-toggle:hover {
+  color: var(--ink);
+}
+.auth-password-toggle:focus-visible {
+  outline-offset: -3px;
+}
 .auth-box form > .primary {
   width: 100%;
   justify-content: space-between;

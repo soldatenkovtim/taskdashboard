@@ -4,22 +4,31 @@ import { useEffect, useRef, useState } from "react";
 import { Music2, Pause, Play, SkipBack, SkipForward, X } from "lucide-react";
 import tracks from "@/lib/music.json";
 
-export default function MusicPlayer() {
+export default function MusicPlayer({ autoplayKey }: { autoplayKey?: string }) {
   const audio = useRef<HTMLAudioElement>(null);
   const panel = useRef<HTMLDetailsElement>(null);
   const [index, setIndex] = useState(0);
   const [playing, setPlaying] = useState(false);
   const [error, setError] = useState("");
   const request = useRef(0);
+  const initialized = useRef(false);
+  const cancelAutoplay = useRef(() => {});
   const track = tracks[index];
 
   useEffect(() => {
     const player = audio.current;
     if (!player) return;
+    if (!initialized.current) {
+      initialized.current = true;
+      const chosen = Math.floor(Math.random() * tracks.length);
+      setIndex(chosen);
+      player.src = tracks[chosen].src;
+    }
     const stopWaiting = () => {
       document.removeEventListener("click", startAfterInteraction);
       document.removeEventListener("keydown", startAfterInteraction);
     };
+    cancelAutoplay.current = stopWaiting;
     const startAfterInteraction = (event: Event) => {
       // Let explicit player controls handle their own play/pause intent.
       if (
@@ -29,16 +38,29 @@ export default function MusicPlayer() {
         return;
       void player.play().catch(() => {});
     };
-    document.addEventListener("click", startAfterInteraction);
-    document.addEventListener("keydown", startAfterInteraction);
-    // Once playback succeeds, a later manual pause must remain a pause.
-    player.addEventListener("play", stopWaiting);
-    void player.play().catch(() => {});
+    // Defer claiming the visit so React's development effect replay is harmless.
+    const timer = window.setTimeout(() => {
+      if (!autoplayKey) return;
+      try {
+        const key = `kontur.music.intro.v1.${autoplayKey}`;
+        if (localStorage.getItem(key)) return;
+        // Count the visit even when the browser blocks playback.
+        localStorage.setItem(key, "seen");
+      } catch {
+        // Without persistent storage, keep playback manual.
+        return;
+      }
+      document.addEventListener("click", startAfterInteraction);
+      document.addEventListener("keydown", startAfterInteraction);
+      player.addEventListener("play", stopWaiting);
+      void player.play().catch(() => {});
+    }, 0);
     return () => {
+      window.clearTimeout(timer);
       stopWaiting();
       player.removeEventListener("play", stopWaiting);
     };
-  }, []);
+  }, [autoplayKey]);
 
   async function playTrack(next: number) {
     const player = audio.current;
@@ -66,7 +88,12 @@ export default function MusicPlayer() {
   }
 
   return (
-    <section className="music-player" aria-label="Музыкальный плеер">
+    <section
+      className="music-player"
+      aria-label="Музыкальный плеер"
+      onPointerDownCapture={() => cancelAutoplay.current()}
+      onKeyDownCapture={() => cancelAutoplay.current()}
+    >
       <div className="music-brand">
         <Music2 size={22} />
         <span>
@@ -111,7 +138,13 @@ export default function MusicPlayer() {
           setError("");
         }}
         onPause={() => setPlaying(false)}
-        onEnded={() => void playTrack(index + 1)}
+        onEnded={() =>
+          void playTrack(
+            index +
+              1 +
+              Math.floor(Math.random() * Math.max(1, tracks.length - 1)),
+          )
+        }
         onError={() => {
           setPlaying(false);
           setError("Этот трек недоступен. Попробуйте следующий.");

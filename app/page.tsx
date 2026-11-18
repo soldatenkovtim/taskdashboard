@@ -1,8 +1,20 @@
 import Link from "next/link";
 import { ArrowUpRight, ArrowRight, Check, Music2 } from "lucide-react";
 import MusicPlayer from "@/components/music-player";
+import { configured, supabase } from "@/lib/supabase";
+import { redirect } from "next/navigation";
 
-export default function Page() {
+export const dynamic = "force-dynamic";
+
+export default async function Page() {
+  if (configured()) {
+    const db = await supabase();
+    const {
+      data: { user },
+    } = await db.auth.getUser();
+    if (user) redirect("/workspace");
+  }
+
   return (
     <div className="landing">
       <header className="landing-nav">
@@ -17,7 +29,7 @@ export default function Page() {
         </nav>
       </header>
       <div className="landing-radio">
-        <MusicPlayer />
+        <MusicPlayer autoplayKey="visit" />
       </div>
       <main>
         <section className="landing-hero">
