@@ -1,5 +1,6 @@
 import Link from "next/link";
-import { ArrowUpRight, ArrowRight, Check, Music2 } from "lucide-react";
+import Image from "next/image";
+import LandingBoard from "@/components/landing-board";
 import MusicPlayer from "@/components/music-player";
 import { configured, supabase } from "@/lib/supabase";
 import { redirect } from "next/navigation";
@@ -23,126 +24,80 @@ export default async function Page() {
         </Link>
         <nav aria-label="Главная навигация">
           <a href="#how-it-works">Как это работает</a>
-          <Link href="/auth">
-            Войти <ArrowUpRight size={15} />
-          </Link>
+          <Link href="/auth">Войти</Link>
         </nav>
       </header>
-      <div className="landing-radio">
-        <MusicPlayer autoplayKey="visit" />
-      </div>
       <main>
-        <section className="landing-hero">
-          <div className="landing-copy">
-            <span className="eyebrow">ОБЩЕЕ ДЕЛО. ОСОБАЯ АТМОСФЕРА.</span>
-            <h1>
-              Дела идут.
-              <br />
-              <em>Джаз играет.</em>
-            </h1>
-            <p>
-              Рабочее пространство, где у каждой задачи есть ответственный, у
-              каждого срока — ясность, а у хорошей работы — свои маленькие
-              награды.
-            </p>
-            <div className="landing-actions">
-              <Link className="primary" href="/auth">
-                Войти в команду <ArrowRight size={18} />
-              </Link>
-              <Link className="outline" href="/auth?mode=signup">
-                Создать аккаунт <ArrowUpRight size={17} />
-              </Link>
-            </div>
-            <span className="landing-caption">
-              Задачи · Команда · Немного нуара
-            </span>
-          </div>
-          <div className="landing-stage">
-            <div className="landing-stage-heading">
-              <span>КОНТУР / NOIR CABARET</span>
-              <span>01 — ∞</span>
-            </div>
-            <img
-              src="/reactions/v2/make-them-work-poster.webp"
-              alt="Нуарная героиня в тёмных очках с красными губами"
-              width={420}
-              height={420}
+        <section className="landing-hero" aria-labelledby="landing-title">
+          <div className="landing-scene">
+            <Image
+              src="/landing/hero-restored.png"
+              alt="Фирменная героиня Контура в тёмных очках и с красной помадой"
+              width={1254}
+              height={1254}
+              sizes="(max-width: 700px) calc(100vw - 44px), (max-width: 1440px) 53vw, 752px"
+              preload
             />
-            <div className="landing-stage-caption">
-              <span>Всё под контролем.</span>
-              <em>Make things happen.</em>
-            </div>
-            <div className="landing-ticket">
-              <Check size={17} />
-              <span>
-                Хорошая работа
-                <br />
-                <strong>заслуживает оваций.</strong>
-              </span>
+            <div className="landing-hero-copy">
+              <h1 id="landing-title">
+                <span>Дела идут.</span>
+                <em>Джаз играет.</em>
+              </h1>
+              <div className="landing-intro">
+                <p>
+                  Задачи, сроки, ответственность.
+                  <br />
+                  Ничего лишнего.
+                </p>
+                <div className="landing-hero-actions">
+                  <Link className="primary" href="/auth">
+                    Войти в команду
+                  </Link>
+                  <Link className="landing-secondary" href="/auth?mode=signup">
+                    Создать аккаунт
+                  </Link>
+                </div>
+              </div>
             </div>
           </div>
         </section>
-        <section className="landing-features" id="how-it-works">
-          <div>
-            <span className="eyebrow">01 / ОРГАНИЗУЙТЕ</span>
-            <h2>
-              У каждого дела
+        <div className="landing-radio">
+          <MusicPlayer variant="landing" />
+        </div>
+        <section
+          className="landing-product"
+          id="how-it-works"
+          aria-labelledby="product-title"
+        >
+          <div className="landing-product-intro">
+            <h2 id="product-title">
+              От задачи
               <br />
-              <em>есть своё место.</em>
+              до результата.
             </h2>
             <p>
-              Ставьте задачи, назначайте исполнителей и следите за движением от
-              первого шага до готового результата.
+              Назначайте исполнителей, согласовывайте дедлайны и отслеживайте
+              работу команды. История решений всегда под рукой.
             </p>
           </div>
-          <div>
-            <span className="eyebrow">02 / ДОГОВАРИВАЙТЕСЬ</span>
-            <h2>
-              Сроки без
-              <br />
-              <em>недосказанности.</em>
-            </h2>
-            <p>
-              Согласовывайте переносы, обсуждайте детали и принимайте работу.
-              История решений остаётся рядом с задачей.
-            </p>
-          </div>
-          <div>
-            <span className="eyebrow">03 / ЛОВИТЕ РИТМ</span>
-            <h2>
-              Работа со
-              <br />
-              <em>своим настроением.</em>
-            </h2>
-            <p>
-              Джазовый плейлист и нуарные реакции на достижения. Маленькие
-              поводы улыбнуться в течение дня.
-            </p>
-          </div>
+          <LandingBoard />
         </section>
-        <section className="landing-join">
-          <Music2 size={28} />
-          <h2>
-            Ваша команда.
-            <br />
-            <em>Ваш ритм.</em>
-          </h2>
-          <p>
-            Сотрудник создаёт аккаунт, администратор открывает доступ — и можно
-            начинать общее дело.
-          </p>
-          <Link className="primary" href="/auth?mode=signup">
-            Присоединиться <ArrowUpRight size={18} />
-          </Link>
-          <Link href="/workspace" className="landing-workspace-link">
-            Уже вошли? Открыть рабочее пространство →
-          </Link>
+        <section className="landing-join" aria-labelledby="join-title">
+          <div>
+            <h2 id="join-title">Начните с первой задачи.</h2>
+            <p>Создайте аккаунт. Администратор откроет доступ к команде.</p>
+          </div>
+          <div className="landing-join-actions">
+            <Link className="primary" href="/auth?mode=signup">
+              Зарегистрироваться
+            </Link>
+            <Link href="/auth">Войти</Link>
+          </div>
         </section>
       </main>
       <footer className="landing-footer">
         <span>контур®</span>
-        <span>Business as unusual.</span>
-        <Link href="/auth">Вход в рабочее пространство</Link>
+        <Link href="/workspace">Рабочее пространство</Link>
       </footer>
     </div>
   );

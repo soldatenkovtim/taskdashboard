@@ -1,10 +1,29 @@
 "use client";
 
 import { useEffect, useRef, useState } from "react";
-import { Music2, Pause, Play, SkipBack, SkipForward, X } from "lucide-react";
+import {
+  Music2,
+  Pause,
+  Play,
+  SkipBack,
+  SkipForward,
+  Volume2,
+  X,
+} from "lucide-react";
 import tracks from "@/lib/music.json";
 
-export default function MusicPlayer({ autoplayKey }: { autoplayKey?: string }) {
+export default function MusicPlayer({
+  autoplayKey,
+  variant = "default",
+}: {
+  autoplayKey?: string;
+  variant?: "default" | "landing";
+}) {
+  const [elapsed, setElapsed] = useState(0);
+  const [duration, setDuration] = useState(0);
+  const [volume, setVolume] = useState(1);
+  const timeLabel = (seconds: number) =>
+    `${Math.floor(seconds / 60)}:${String(Math.floor(seconds % 60)).padStart(2, "0")}`;
   const audio = useRef<HTMLAudioElement>(null);
   const panel = useRef<HTMLDetailsElement>(null);
   const [index, setIndex] = useState(0);
@@ -89,7 +108,7 @@ export default function MusicPlayer({ autoplayKey }: { autoplayKey?: string }) {
 
   return (
     <section
-      className="music-player"
+      className={`music-player music-player-${variant}`}
       aria-label="Музыкальный плеер"
       onPointerDownCapture={() => cancelAutoplay.current()}
       onKeyDownCapture={() => cancelAutoplay.current()}
@@ -130,7 +149,19 @@ export default function MusicPlayer({ autoplayKey }: { autoplayKey?: string }) {
       <audio
         ref={audio}
         src={tracks[0].src}
-        controls
+        controls={false}
+        onTimeUpdate={(event) => setElapsed(event.currentTarget.currentTime)}
+        onLoadedMetadata={(event) =>
+          setDuration(
+            Number.isFinite(event.currentTarget.duration)
+              ? event.currentTarget.duration
+              : 0,
+          )
+        }
+        onEmptied={() => {
+          setElapsed(0);
+          setDuration(0);
+        }}
         preload="none"
         aria-label="Перемотка и громкость"
         onPlay={() => {
@@ -150,6 +181,39 @@ export default function MusicPlayer({ autoplayKey }: { autoplayKey?: string }) {
           setError("Этот трек недоступен. Попробуйте следующий.");
         }}
       />
+      {
+        <div className="music-levels">
+          <span className="music-time">{timeLabel(elapsed)}</span>
+          <input
+            type="range"
+            aria-label="Позиция воспроизведения"
+            min={0}
+            max={duration || 0}
+            step={1}
+            value={Math.min(elapsed, duration)}
+            disabled={!duration}
+            onChange={(event) => {
+              const value = Number(event.target.value);
+              if (audio.current) audio.current.currentTime = value;
+              setElapsed(value);
+            }}
+          />
+          <Volume2 size={16} aria-hidden="true" />
+          <input
+            type="range"
+            aria-label="Громкость"
+            min={0}
+            max={1}
+            step={0.01}
+            value={volume}
+            onChange={(event) => {
+              const value = Number(event.target.value);
+              if (audio.current) audio.current.volume = value;
+              setVolume(value);
+            }}
+          />
+        </div>
+      }
       {error && (
         <p className="music-error" role="alert">
           {error}

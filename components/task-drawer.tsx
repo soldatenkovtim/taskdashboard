@@ -1,4 +1,5 @@
 "use client";
+import ProjectFiles from "./project-files";
 import { useState, useRef, useEffect } from "react";
 import {
   X,
@@ -193,6 +194,7 @@ export function TaskForm({
 }
 export function TaskDrawer({
   task: t,
+  preview = false,
   data,
   mutate,
   busy,
@@ -201,6 +203,7 @@ export function TaskDrawer({
   onClose,
 }: {
   task: Task;
+  preview?: boolean;
   data: Data;
   mutate: Mutate;
   busy: boolean;
@@ -540,6 +543,7 @@ export function TaskDrawer({
           )}
         </dl>
       </details>
+      <ProjectFiles task={t} tasks={data.tasks} preview={preview} />
       <section className="activity-section">
         <h3>
           Движение задачи <span>{entries.length}</span>
