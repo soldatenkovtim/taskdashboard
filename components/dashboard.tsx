@@ -2,6 +2,7 @@
 import { useState, useEffect, useCallback, useRef } from "react";
 import {
   LayoutGrid,
+  FolderOpen,
   ChartNoAxesCombined,
   CheckCheck,
   Users,
@@ -26,6 +27,9 @@ import {
   Settings2,
   Link2,
 } from "lucide-react";
+import ProjectFiles from "./project-files";
+import NoirCharacter from "./noir-character";
+import { flawlessWeek } from "@/lib/noir-character";
 import type { Data, Task, Status } from "@/lib/types";
 import { statuses, overdue, date } from "@/lib/types";
 import { authAction } from "@/app/auth/actions";
@@ -44,13 +48,14 @@ export type Mutate = (
   action: string,
   payload: Record<string, unknown>,
 ) => Promise<boolean>;
-type View = "board" | "overview" | "approvals" | "team" | "archive";
+type View = "files" | "board" | "overview" | "approvals" | "team" | "archive";
 const nav = [
   { id: "board", label: "Доска задач", icon: LayoutGrid },
   { id: "overview", label: "Обзор команды", icon: ChartNoAxesCombined },
   { id: "approvals", label: "Согласования", icon: CheckCheck },
   { id: "team", label: "Команда", icon: Users },
   { id: "archive", label: "Архив", icon: Archive },
+  { id: "files", label: "Файлы проектов", icon: FolderOpen },
 ] as const;
 const notificationLabels: Record<string, string> = {
   assigned: "Вам назначена задача",
@@ -64,11 +69,15 @@ const notificationLabels: Record<string, string> = {
 export default function Dashboard({
   setup = false,
   previewRole = "admin",
+  previewData,
 }: {
   setup?: boolean;
   previewRole?: "admin" | "employee";
+  previewData?: Data;
 }) {
-  const [data, setData] = useState<Data | null>(null),
+  const [data, setData] = useState<Data | null>(
+      setup ? (previewData ?? null) : null,
+    ),
     [view, setView] = useState<View>("board"),
     [loading, setLoading] = useState(!setup),
     [error, setError] = useState(""),
@@ -77,6 +86,9 @@ export default function Dashboard({
     [person, setPerson] = useState(""),
     [statusFilter, setStatusFilter] = useState(""),
     [lateOnly, setLateOnly] = useState(false),
+    [metricFilter, setMetricFilter] = useState<
+      "" | "active" | "done" | "on-time" | "changed" | "week"
+    >(""),
     [sort, setSort] = useState(false),
     [selected, setSelected] = useState<string | null>(null),
     [creating, setCreating] = useState(false),
@@ -85,11 +97,24 @@ export default function Dashboard({
     [mobileNav, setMobileNav] = useState(false),
     [mobileCol, setMobileCol] = useState<Status>("todo"),
     [busy, setBusy] = useState(false),
-    [clock, setClock] = useState(Date.now());
+    // SSR and hydration must use the same timestamp, including at a deadline.
+    [clock, setClock] = useState(() =>
+      setup && previewData ? Date.parse(previewData.serverNow) : 0,
+    );
   const [profileOpen, setProfileOpen] = useState(false),
     [preferenceBusy, setPreferenceBusy] = useState(false),
     [preferenceError, setPreferenceError] = useState(""),
     [reaction, setReaction] = useState<ReactionInstance | null>(null);
+  const boardToolbar = useRef<HTMLDivElement>(null);
+  const [boardJump, setBoardJump] = useState(0);
+  useEffect(() => {
+    if (!boardJump || view !== "board") return;
+    boardToolbar.current?.focus({ preventScroll: true });
+    boardToolbar.current?.scrollIntoView({
+      block: "start",
+      behavior: window.matchMedia("(prefers-reduced-motion: reduce)").matches ? "instant" : "smooth",
+    });
+  }, [boardJump, view]);
   const inbox = useRef(new ReactionInbox()),
     reactionSerial = useRef(0),
     dataRef = useRef<Data | null>(null),
@@ -142,8 +167,10 @@ export default function Dashboard({
       }
       if (!r.ok) throw Error(value.error);
       if (sequence !== loadSequence.current) return;
-      if (value.serverNow)
+      if (value.serverNow) {
         clockOffset.current = Date.parse(value.serverNow) - Date.now();
+        setClock(Date.parse(value.serverNow));
+      }
       dataRef.current = value;
       const nextReaction = inbox.current.observe(value);
       if (value.profile.access_status !== "active") setReaction(null);
@@ -164,6 +191,7 @@ export default function Dashboard({
     return () => clearInterval(timer);
   }, [load]);
   useEffect(() => {
+    setClock(Date.now() + clockOffset.current);
     const timer = setInterval(
       () => setClock(Date.now() + clockOffset.current),
       10000,
@@ -295,11 +323,26 @@ export default function Dashboard({
   const filtered = tasks
     .filter(
       (t) =>
-        (view === "archive" ? !!t.archived_at : !t.archived_at) &&
+        (view === "archive"
+          ? !!t.archived_at
+          : metricFilter && metricFilter !== "active"
+            ? true
+            : !t.archived_at) &&
         t.title.toLowerCase().includes(query.toLowerCase()) &&
         (!person || t.assignee_id === person) &&
         (!statusFilter || t.status === statusFilter) &&
-        (!lateOnly || overdue(t, clock)),
+        (!lateOnly ||
+          (view === "archive" ? t.completed_late : overdue(t, clock))) &&
+        (!metricFilter ||
+          (metricFilter === "active"
+            ? t.status !== "done"
+            : metricFilter === "changed"
+              ? t.deadline_changes > 0
+              : metricFilter === "week"
+                ? !!t.completed_at && Date.parse(t.completed_at) >= weekStart
+                : metricFilter === "on-time"
+                  ? t.status === "done" && !!t.deadline && !t.completed_late
+                  : t.status === "done")),
     )
     .sort((a, b) =>
       sort
@@ -315,6 +358,18 @@ export default function Dashboard({
     setLateOnly(false);
     setPerson("");
     setStatusFilter("");
+    setMetricFilter("");
+  }
+  function showMetric(
+    personId: string,
+    metric: typeof metricFilter,
+    overdueOnly = false,
+  ) {
+    navigate("board");
+    setPerson(personId);
+    setMetricFilter(metric);
+    setLateOnly(overdueOnly);
+    if (["done", "on-time", "week"].includes(metric)) setMobileCol("done");
   }
   async function move(id: string, status: Status) {
     const t = tasks.find((t) => t.id === id);
@@ -387,7 +442,7 @@ export default function Dashboard({
         <span className="nav-caption">ПРОСТРАНСТВО</span>
         <nav>
           {nav
-            .filter((n) => admin || n.id === "board")
+            .filter((n) => admin || n.id === "board" || n.id === "files")
             .map((n) => (
               <button
                 key={n.id}
@@ -402,14 +457,6 @@ export default function Dashboard({
               </button>
             ))}
         </nav>
-        <div className="sidebar-note">
-          <span className="little-star">✳</span>
-          <p>
-            Большие дела —<br />
-            <em>маленькими шагами.</em>
-          </p>
-          <span>Всё важное уже здесь.</span>
-        </div>
         <div className="sidebar-bottom">
           <div className="connection">
             <i className={setup ? "offline" : ""} />
@@ -480,31 +527,32 @@ export default function Dashboard({
         <main className="workspace">
           <div className="page-heading">
             <div>
-              <div className="eyebrow">
-                <span className="tiny-line" /> ОБЩИЙ РИТМ. ЯСНЫЙ ФОКУС.
-              </div>
               <h1>
-                {view === "board"
-                  ? "Дела идут."
-                  : view === "overview"
-                    ? "Вся картина."
-                    : view === "approvals"
-                      ? "Договоримся."
-                      : view === "team"
-                        ? "Наши люди."
-                        : "Всё на месте."}
+                {view === "files"
+                  ? "Файлы проектов"
+                  : view === "board"
+                    ? "Дела идут."
+                    : view === "overview"
+                      ? "Вся картина."
+                      : view === "approvals"
+                        ? "Договоримся."
+                        : view === "team"
+                          ? "Наши люди."
+                          : "Всё на месте."}
                 <span className="heading-spark">✳</span>
               </h1>
               <p>
-                {view === "board"
-                  ? "От первой идеи до последней галочки. Всё в одном контуре."
-                  : view === "overview"
-                    ? "Как движется команда и где нужна ваша помощь."
-                    : view === "approvals"
-                      ? "Сроки меняются открыто. Каждое решение остаётся в истории."
-                      : view === "team"
-                        ? "У каждого своя роль. У всех — общее дело."
-                        : "Завершённые главы тоже заслуживают своего места."}
+                {view === "files"
+                  ? "Документы, ссылки и результаты работы — по проектам."
+                  : view === "board"
+                    ? "От первой идеи до последней галочки. Всё в одном контуре."
+                    : view === "overview"
+                      ? "Как движется команда и где нужна ваша помощь."
+                      : view === "approvals"
+                        ? "Сроки меняются открыто. Каждое решение остаётся в истории."
+                        : view === "team"
+                          ? "У каждого своя роль. У всех — общее дело."
+                          : "Завершённые главы тоже заслуживают своего места."}
               </p>
             </div>
             <button className="primary create-button" onClick={newTask}>
@@ -512,59 +560,62 @@ export default function Dashboard({
               Новая задача
             </button>
           </div>
-          <section className="stats-strip" aria-label="Состояние задач">
-            <button
-              onClick={() => {
-                navigate("board");
-                setStatusFilter("");
-              }}
-            >
-              <span>
-                Активные задачи
-                <ArrowUpRight size={15} />
-              </span>
-              <strong>{active.length.toString().padStart(2, "0")}</strong>
-              <small>В движении прямо сейчас</small>
-            </button>
-            <button
-              className="late-stat"
-              onClick={() => {
-                navigate("board");
-                setLateOnly(true);
-              }}
-            >
-              <span>
-                Просрочены
-                <AlertCircle size={15} />
-              </span>
-              <strong>
-                {late.length.toString().padStart(2, "0")}
-                <i />
-              </strong>
-              <small>Нуждаются во внимании</small>
-            </button>
-            <button onClick={() => navigate(admin ? "approvals" : "board")}>
-              <span>
-                На согласовании
-                <Clock size={15} />
-              </span>
-              <strong>{pending.length.toString().padStart(2, "0")}</strong>
-              <small>Ждут решения по срокам</small>
-            </button>
-            <button
-              onClick={() => {
-                navigate("board");
-                setStatusFilter("done");
-              }}
-            >
-              <span>
-                Готово за неделю
-                <CheckCheck size={16} />
-              </span>
-              <strong>{doneWeek.length.toString().padStart(2, "0")}</strong>
-              <small>Поводов сказать «сделано»</small>
-            </button>
-          </section>
+          {view === "overview" && (
+            <section className="stats-strip" aria-label="Состояние задач">
+              <button
+                onClick={() => {
+                  navigate("board");
+                  setMetricFilter("active");
+                }}
+              >
+                <span>
+                  Активные задачи
+                  <ArrowUpRight size={15} />
+                </span>
+                <strong>{active.length.toString().padStart(2, "0")}</strong>
+                <small>В движении прямо сейчас</small>
+              </button>
+              <button
+                className="late-stat"
+                onClick={() => {
+                  navigate("board");
+                  setLateOnly(true);
+                }}
+              >
+                <span>
+                  Просрочены
+                  <AlertCircle size={15} />
+                </span>
+                <strong>
+                  {late.length.toString().padStart(2, "0")}
+                  <i />
+                </strong>
+                <small>Нуждаются во внимании</small>
+              </button>
+              <button onClick={() => navigate(admin ? "approvals" : "board")}>
+                <span>
+                  На согласовании
+                  <Clock size={15} />
+                </span>
+                <strong>{pending.length.toString().padStart(2, "0")}</strong>
+                <small>Ждут решения по срокам</small>
+              </button>
+              <button
+                onClick={() => {
+                  navigate("board");
+                  setMetricFilter("week");
+                  setMobileCol("done");
+                }}
+              >
+                <span>
+                  Готово за неделю
+                  <CheckCheck size={16} />
+                </span>
+                <strong>{doneWeek.length.toString().padStart(2, "0")}</strong>
+                <small>Поводов сказать «сделано»</small>
+              </button>
+            </section>
+          )}
           {setup && (
             <div className="setup-banner">
               <span className="setup-symbol">
@@ -602,6 +653,20 @@ export default function Dashboard({
               )}
             </div>
           )}
+          {setup && (
+            <div className="preview-density">
+              Демо-нагрузка:{" "}
+              {[5, 15, 30].map((count) => (
+                <a
+                  key={count}
+                  href={`/preview?role=${previewRole}&count=${count}`}
+                >
+                  {count} задач
+                </a>
+              ))}{" "}
+              · Запись данных отключена
+            </div>
+          )}
           {error && (
             <div className="error global-error" role="alert">
               <AlertCircle size={17} />
@@ -616,13 +681,33 @@ export default function Dashboard({
               </button>
             </div>
           )}
+          {view === "files" && (
+            <ProjectFiles tasks={data?.tasks ?? []} preview={setup} />
+          )}
+          {(view === "overview" || (view === "board" && !admin)) && data && !loading && !error && (() => {
+            const visible = tasks.filter(t => (admin || t.assignee_id === data.profile.id) && (!person || t.assignee_id === person));
+            const overdueTasks = visible.filter(t => !t.archived_at && overdue(t, clock));
+            if (overdueTasks.length) return (
+              <NoirCharacter context={view === "board" ? "board" : "overview"} state="disappointed" size="medium" caption="Кажется, у нас разговор">
+                <p>Просроченных задач: {overdueTasks.length}</p>
+                <button onClick={() => {
+                  showMetric(person || (admin ? "" : data.profile.id), "", true);
+                  setBoardJump(value => value + 1);
+                  setMobileCol(overdueTasks[0].status);
+                }}>Посмотреть просроченные <ArrowRight size={14} aria-hidden="true" /></button>
+              </NoirCharacter>
+            );
+            return view === "overview" && flawlessWeek(visible, weekStart, clock) ? (
+              <NoirCharacter context="overview" state="celebrating" caption="Какое прекрасное выступление" />
+            ) : null;
+          })()}
           {(view === "board" || view === "archive") && (
             <>
-              <div className="board-toolbar">
+              <div className="board-toolbar" ref={boardToolbar} tabIndex={-1} aria-label="Фильтры и результаты доски">
                 <div className="board-view">
                   <LayoutGrid size={16} />
                   <strong>
-                    {view === "archive" ? "Архив задач" : "Все задачи"}
+                    {view === "archive" ? "Архив задач" : lateOnly ? "Просроченные задачи" : "Все задачи"}
                   </strong>
                   <span>{filtered.length}</span>
                 </div>
@@ -660,7 +745,9 @@ export default function Dashboard({
                     onClick={() => setLateOnly(!lateOnly)}
                   >
                     <SlidersHorizontal size={15} />
-                    <span>Просроченные</span>
+                    <span>
+                      {view === "archive" ? "С опозданием" : "Просроченные"}
+                    </span>
                   </button>
                   <button
                     className={`icon-button ${sort ? "selected" : ""}`}
@@ -673,20 +760,43 @@ export default function Dashboard({
                   </button>
                 </div>
               </div>
-              <div className="mobile-columns">
-                {statuses.map((s) => (
-                  <button
-                    key={s.id}
-                    className={mobileCol === s.id ? "active" : ""}
-                    onClick={() => setMobileCol(s.id)}
-                  >
-                    {s.label}
-                    <span>
-                      {filtered.filter((t) => t.status === s.id).length}
-                    </span>
-                  </button>
-                ))}
-              </div>
+              {view === "board" && (
+                <div className="mobile-columns">
+                  {statuses.map((s) => (
+                    <button
+                      key={s.id}
+                      className={mobileCol === s.id ? "active" : ""}
+                      onClick={() => setMobileCol(s.id)}
+                    >
+                      {s.label}
+                      <span>
+                        {filtered.filter((t) => t.status === s.id).length}
+                      </span>
+                    </button>
+                  ))}
+                </div>
+              )}
+              {lateOnly && (
+                <div className="filter-indicator" role="status">
+                  {view === "archive" ? "Завершены с опозданием" : "Только просроченные задачи"} · Найдено: {filtered.length}
+                  <button onClick={() => { setLateOnly(false); setMetricFilter(""); }}>Сбросить фильтр просрочки</button>
+                </div>
+              )}
+              {metricFilter && (
+                <div className="filter-indicator">
+                  Выборка:{" "}
+                  {
+                    {
+                      active: "Активные",
+                      done: "Завершённые",
+                      "on-time": "Завершены в срок",
+                      changed: "С переносами сроков",
+                      week: "Готово за неделю",
+                    }[metricFilter]
+                  }
+                  <button onClick={() => setMetricFilter("")}>Сбросить</button>
+                </div>
+              )}
               {statusFilter && (
                 <div className="filter-indicator">
                   Статус: {statuses.find((s) => s.id === statusFilter)?.label}
@@ -696,188 +806,258 @@ export default function Dashboard({
                   </button>
                 </div>
               )}
-              <section className="kanban">
-                {statuses.map((s, index) => {
-                  const items = filtered.filter((t) => t.status === s.id);
-                  return (
-                    <div
-                      key={s.id}
-                      className={`kanban-column ${s.id} ${mobileCol === s.id ? "mobile-active" : ""}`}
-                      onDragOver={(e) => e.preventDefault()}
-                      onDrop={(e) => {
-                        e.preventDefault();
-                        if (view !== "archive")
-                          void move(e.dataTransfer.getData("text/plain"), s.id);
-                      }}
-                    >
-                      <div className="column-header">
-                        <span className="status-marker">
-                          {s.id === "done" && <Check size={10} />}
-                        </span>
-                        <h2>{s.label}</h2>
-                        <span className="column-count">{items.length}</span>
-                        <button
-                          className="icon-button"
-                          aria-label={`Создать задачу`}
-                          onClick={newTask}
-                        >
-                          <Plus size={16} />
-                        </button>
-                      </div>
-                      <p className="column-caption">{s.caption}</p>
-                      <div className="column-tasks">
-                        {loading ? (
-                          <>
-                            <div className="skeleton" />
-                            <div className="skeleton" />
-                          </>
-                        ) : items.length ? (
-                          items.map((t) => (
-                            <article
-                              key={t.id}
-                              draggable={view !== "archive" && !busy}
-                              onDragStart={(e) =>
-                                e.dataTransfer.setData("text/plain", t.id)
-                              }
-                              className={`task-card ${overdue(t, clock) ? "is-late" : ""}`}
-                            >
+              {view === "board" && data && !loading && !error && !tasks.some(t => !t.archived_at && (admin || t.assignee_id === data.profile.id)) && (
+                <NoirCharacter context="board" state="playful" caption="Ну что, начнём?" />
+              )}
+              {view === "archive" ? (
+                <div
+                  className="archive-list"
+                  role="region"
+                  aria-label="Архив задач"
+                  tabIndex={0}
+                >
+                  <table>
+                    <thead>
+                      <tr>
+                        <th>Задача</th>
+                        <th>Исполнитель</th>
+                        <th>Завершена</th>
+                        <th>Первый срок</th>
+                        <th>Финальный срок</th>
+                        <th>Результат</th>
+                        <th>Действия</th>
+                      </tr>
+                    </thead>
+                    <tbody>
+                      {filtered.map((t) => (
+                        <tr key={t.id}>
+                          <td>
+                            <button onClick={() => setSelected(t.id)}>
+                              {t.title}
+                            </button>
+                          </td>
+                          <td>
+                            {profiles.find((p) => p.id === t.assignee_id)
+                              ?.name ?? "Участник"}
+                          </td>
+                          <td>
+                            {t.completed_at
+                              ? date(t.completed_at, true)
+                              : "Не завершена"}
+                          </td>
+                          <td>{date(t.original_deadline, true)}</td>
+                          <td>{date(t.deadline, true)}</td>
+                          <td className={t.completed_late ? "text-red" : ""}>
+                            {t.completed_late
+                              ? "С опозданием"
+                              : t.status === "done"
+                                ? "В срок"
+                                : "Не завершена"}
+                          </td>
+                          <td>
+                            {admin && (
                               <button
-                                className="card-open"
-                                onClick={() => setSelected(t.id)}
+                                disabled={busy}
+                                onClick={() =>
+                                  void mutate("restore", {
+                                    id: t.id,
+                                    version: t.version,
+                                  })
+                                }
                               >
-                                <div className="card-meta">
-                                  <span className={`priority ${t.priority}`}>
-                                    {t.priority === "high"
-                                      ? "↑ Высокий"
-                                      : t.priority === "low"
-                                        ? "↓ Низкий"
-                                        : "— Обычный"}
-                                  </span>
-                                  <span>
-                                    КТ–{t.id.slice(0, 4).toUpperCase()}
-                                  </span>
-                                </div>
-                                <h3>{t.title}</h3>
-                                {t.description && <p>{t.description}</p>}
-                                {pending.some((r) => r.task_id === t.id) && (
-                                  <span className="pending-label">
-                                    <Clock size={12} />
-                                    Срок на согласовании
-                                  </span>
-                                )}
-                                <div className="card-deadline">
-                                  <Clock size={13} />
-                                  <span>{date(t.deadline)}</span>
-                                  {overdue(t, clock) && <b>Просрочено</b>}
-                                  {t.completed_late && <b>С опозданием</b>}
-                                </div>
-                              </button>
-                              <footer>
-                                <span className="assignee">
-                                  <Avatar
-                                    small
-                                    name={
-                                      profiles.find(
-                                        (p) => p.id === t.assignee_id,
-                                      )?.name ?? "Участник"
-                                    }
-                                    avatar={
-                                      profiles.find(
-                                        (p) => p.id === t.assignee_id,
-                                      )?.avatar_id
-                                    }
-                                  />
-                                  {profiles
-                                    .find((p) => p.id === t.assignee_id)
-                                    ?.name.split(" ")[0] ?? "Участник"}
-                                </span>
-                                <button
-                                  className="card-comments"
-                                  onClick={() => setSelected(t.id)}
-                                  aria-label="Открыть обсуждение"
-                                >
-                                  <MessageSquare size={13} />
-                                  {data?.comments.filter(
-                                    (c) => c.task_id === t.id,
-                                  ).length ?? 0}
-                                </button>
-                                <select
-                                  aria-label={`Статус задачи ${t.title}`}
-                                  value={t.status}
-                                  disabled={
-                                    busy ||
-                                    !!t.archived_at ||
-                                    t.status === "done"
-                                  }
-                                  onChange={(e) =>
-                                    void move(t.id, e.target.value as Status)
-                                  }
-                                >
-                                  {statuses.map((x) => (
-                                    <option
-                                      key={x.id}
-                                      value={x.id}
-                                      disabled={
-                                        (x.id === "done" && !admin) ||
-                                        (t.status === "review" &&
-                                          x.id === "progress" &&
-                                          !admin)
-                                      }
-                                    >
-                                      {x.label}
-                                    </option>
-                                  ))}
-                                </select>
-                              </footer>
-                            </article>
-                          ))
-                        ) : (
-                          <div className="column-empty">
-                            <span className="empty-number">0{index + 1}</span>
-                            <div className="empty-orbit" aria-hidden="true" />
-                            <strong>
-                              {query || lateOnly || person || statusFilter
-                                ? "Ничего не найдено"
-                                : s.id === "todo"
-                                  ? "Место для нового"
-                                  : s.id === "progress"
-                                    ? "Скоро закипит работа"
-                                    : s.id === "review"
-                                      ? "Пока без проверок"
-                                      : "Здесь будут победы"}
-                            </strong>
-                            <p>
-                              {query || lateOnly || person || statusFilter
-                                ? "Попробуйте изменить фильтры"
-                                : s.id === "todo"
-                                  ? "Добавьте задачу — и первый шаг уже сделан."
-                                  : s.id === "progress"
-                                    ? "Начатые задачи появятся в этой колонке."
-                                    : s.id === "review"
-                                      ? "Готовая работа ждёт здесь принятия."
-                                      : "Каждая закрытая задача — шаг вперёд."}
-                            </p>
-                            {s.id === "todo" && (
-                              <button onClick={newTask}>
-                                <Plus size={14} />
-                                Добавить задачу
+                                Восстановить
                               </button>
                             )}
-                          </div>
-                        )}
-                      </div>
-                      {items.length > 0 &&
-                        s.id === "todo" &&
-                        view !== "archive" && (
+                          </td>
+                        </tr>
+                      ))}
+                    </tbody>
+                  </table>
+                  {!filtered.length && (
+                    data && !loading && !error && !tasks.some(t => t.archived_at) ?
+                      <NoirCharacter context="archive" caption="История ещё не написана" /> :
+                      <p className="compact-empty">Архивных задач не найдено.</p>
+                  )}
+                </div>
+              ) : (
+                <section className="kanban">
+                  {statuses.map((s) => {
+                    const items = filtered.filter((t) => t.status === s.id);
+                    return (
+                      <div
+                        key={s.id}
+                        className={`kanban-column ${s.id} ${mobileCol === s.id ? "mobile-active" : ""}`}
+                        onDragOver={(e) => e.preventDefault()}
+                        onDrop={(e) => {
+                          e.preventDefault();
+                          void move(e.dataTransfer.getData("text/plain"), s.id);
+                        }}
+                      >
+                        <div className="column-header">
+                          <span className="status-marker">
+                            {s.id === "done" && <Check size={10} />}
+                          </span>
+                          <h2>{s.label}</h2>
+                          <span className="column-count">{items.length}</span>
+                          <button
+                            className="icon-button"
+                            aria-label={`Создать задачу`}
+                            onClick={newTask}
+                          >
+                            <Plus size={16} />
+                          </button>
+                        </div>
+                        <p className="column-caption">{s.caption}</p>
+                        <div className="column-tasks">
+                          {loading ? (
+                            <>
+                              <div className="skeleton" />
+                              <div className="skeleton" />
+                            </>
+                          ) : items.length ? (
+                            items.map((t) => (
+                              <article
+                                key={t.id}
+                                draggable={!busy && !t.archived_at}
+                                onDragStart={(e) =>
+                                  e.dataTransfer.setData("text/plain", t.id)
+                                }
+                                className={`task-card ${overdue(t, clock) ? "is-late" : ""}`}
+                              >
+                                <button
+                                  className="card-open"
+                                  onClick={() => setSelected(t.id)}
+                                >
+                                  <div className="card-meta">
+                                    <span className={`priority ${t.priority}`}>
+                                      {t.priority === "high"
+                                        ? "↑ Высокий"
+                                        : t.priority === "low"
+                                          ? "↓ Низкий"
+                                          : "— Обычный"}
+                                    </span>
+                                    <span>
+                                      КТ–{t.id.slice(0, 4).toUpperCase()}
+                                    </span>
+                                  </div>
+                                  <h3>{t.title}</h3>
+                                  {t.description && <p>{t.description}</p>}
+                                  {pending.some((r) => r.task_id === t.id) && (
+                                    <span className="pending-label">
+                                      <Clock size={12} />
+                                      Срок на согласовании
+                                    </span>
+                                  )}
+                                  <div className="card-deadline">
+                                    <Clock size={13} />
+                                    <span>{date(t.deadline)}</span>
+                                    {overdue(t, clock) && <b>Просрочено</b>}
+                                    {t.completed_late && <b>С опозданием</b>}
+                                  </div>
+                                </button>
+                                <footer>
+                                  <span className="assignee">
+                                    <Avatar
+                                      small
+                                      name={
+                                        profiles.find(
+                                          (p) => p.id === t.assignee_id,
+                                        )?.name ?? "Участник"
+                                      }
+                                      avatar={
+                                        profiles.find(
+                                          (p) => p.id === t.assignee_id,
+                                        )?.avatar_id
+                                      }
+                                    />
+                                    {profiles
+                                      .find((p) => p.id === t.assignee_id)
+                                      ?.name.split(" ")[0] ?? "Участник"}
+                                  </span>
+                                  <button
+                                    className="card-comments"
+                                    onClick={() => setSelected(t.id)}
+                                    aria-label="Открыть обсуждение"
+                                  >
+                                    <MessageSquare size={13} />
+                                    {data?.comments.filter(
+                                      (c) => c.task_id === t.id,
+                                    ).length ?? 0}
+                                  </button>
+                                  <select
+                                    aria-label={`Статус задачи ${t.title}`}
+                                    value={t.status}
+                                    disabled={
+                                      busy ||
+                                      !!t.archived_at ||
+                                      t.status === "done"
+                                    }
+                                    onChange={(e) =>
+                                      void move(t.id, e.target.value as Status)
+                                    }
+                                  >
+                                    {statuses.map((x) => (
+                                      <option
+                                        key={x.id}
+                                        value={x.id}
+                                        disabled={
+                                          (x.id === "done" && !admin) ||
+                                          (t.status === "review" &&
+                                            x.id === "progress" &&
+                                            !admin)
+                                        }
+                                      >
+                                        {x.label}
+                                      </option>
+                                    ))}
+                                  </select>
+                                </footer>
+                              </article>
+                            ))
+                          ) : (
+                            <div className="column-empty">
+                              <strong>
+                                {query || lateOnly || person || statusFilter
+                                  ? "Ничего не найдено"
+                                  : s.id === "todo"
+                                    ? "Нет новых задач"
+                                    : s.id === "progress"
+                                      ? "Нет задач в работе"
+                                      : s.id === "review"
+                                        ? "Нет задач на проверке"
+                                        : "Нет завершённых задач"}
+                              </strong>
+                              <p>
+                                {query || lateOnly || person || statusFilter
+                                  ? "Попробуйте изменить фильтры"
+                                  : s.id === "todo"
+                                    ? "Добавьте задачу — и первый шаг уже сделан."
+                                    : s.id === "progress"
+                                      ? "Начатые задачи появятся в этой колонке."
+                                      : s.id === "review"
+                                        ? "Готовая работа ждёт здесь принятия."
+                                        : "Принятые задачи появятся здесь."}
+                              </p>
+                              {s.id === "todo" && (
+                                <button onClick={newTask}>
+                                  <Plus size={14} />
+                                  Добавить задачу
+                                </button>
+                              )}
+                            </div>
+                          )}
+                        </div>
+                        {items.length > 0 && s.id === "todo" && (
                           <button className="add-task" onClick={newTask}>
                             <Plus size={14} />
                             Добавить задачу
                           </button>
                         )}
-                    </div>
-                  );
-                })}
-              </section>
+                      </div>
+                    );
+                  })}
+                </section>
+              )}
               <div className="board-footer">
                 <span>
                   <span className="tiny-dot" />{" "}
@@ -889,48 +1069,118 @@ export default function Dashboard({
               </div>
             </>
           )}
-          {view === "approvals" && (
-            <section className="list-section">
+          {view === "approvals" && admin && (
+            <section className="list-section approvals-list">
               <h2>
                 Ожидают решения <span>{pending.length}</span>
               </h2>
-              {pending.length ? (
-                pending.map((r) => {
-                  const t = tasks.find((t) => t.id === r.task_id);
-                  return (
-                    t && (
+              {!pending.length && (
+                data && !loading && !error ?
+                  <NoirCharacter context="approvals" state="playful" caption="Сегодня никаких переговоров" /> :
+                  <p className="compact-empty">Данные согласований пока недоступны.</p>
+              )}
+              {pending.map((r) => {
+                const t = tasks.find((t) => t.id === r.task_id);
+                return (
+                  t && (
+                    <article className="approval-item" key={r.id}>
                       <button
-                        className="approval-row"
-                        key={r.id}
+                        className="approval-title"
                         onClick={() => setSelected(t.id)}
                       >
-                        <span className="round-icon">
-                          <Clock size={20} />
-                        </span>
-                        <div>
-                          <strong>{t.title}</strong>
-                          <p>{r.reason || "Предложен первоначальный срок"}</p>
-                          <small>
-                            {profiles.find((p) => p.id === r.requested_by)
-                              ?.name ?? "Участник"}{" "}
-                            · {date(r.created_at)}
-                          </small>
-                        </div>
-                        <span>
-                          {date(t.deadline)} <ArrowRight size={14} />{" "}
-                          <b>{date(r.proposed_deadline)}</b>
-                        </span>
-                        <ArrowUpRight size={20} />
+                        {t.title}
                       </button>
-                    )
-                  );
-                })
-              ) : (
-                <Empty
-                  title="Всё согласовано"
-                  text="Здесь появятся предложения сроков и запросы на перенос."
-                />
+                      <p className="muted">
+                        {profiles.find((p) => p.id === t.assignee_id)?.name ??
+                          "Участник"}{" "}
+                        · Запрос от {date(r.created_at, true)}
+                      </p>
+                      <dl>
+                        <div>
+                          <dt>Текущий срок</dt>
+                          <dd>{date(t.deadline, true)}</dd>
+                        </div>
+                        <div>
+                          <dt>Предложен</dt>
+                          <dd>{date(r.proposed_deadline, true)}</dd>
+                        </div>
+                      </dl>
+                      <p>{r.reason || "Предложен первоначальный срок"}</p>
+                      <div className="approval-actions">
+                        <button
+                          className="primary"
+                          disabled={
+                            busy || !!t.archived_at || t.status === "done"
+                          }
+                          onClick={() =>
+                            void mutate("approve", {
+                              id: t.id,
+                              version: t.version,
+                              request_id: r.id,
+                            })
+                          }
+                        >
+                          Согласовать
+                        </button>
+                        <button
+                          className="outline"
+                          disabled={
+                            busy || !!t.archived_at || t.status === "done"
+                          }
+                          onClick={() =>
+                            void mutate("reject", {
+                              id: t.id,
+                              version: t.version,
+                              request_id: r.id,
+                            })
+                          }
+                        >
+                          Отклонить
+                        </button>
+                        <button
+                          className="outline"
+                          onClick={() => setSelected(t.id)}
+                        >
+                          Предложить другую дату
+                        </button>
+                      </div>
+                    </article>
+                  )
+                );
+              })}
+              <h2 className="approval-history-title">История согласований</h2>
+              {!(data?.requests ?? []).some((r) => r.status !== "pending") && (
+                <p className="compact-empty">Обработанных запросов пока нет.</p>
               )}
+              {(data?.requests ?? [])
+                .filter((r) => r.status !== "pending")
+                .sort((a, b) => b.created_at.localeCompare(a.created_at))
+                .map((r) => {
+                  const t = tasks.find((t) => t.id === r.task_id);
+                  return (
+                    <article
+                      className="approval-item approval-history"
+                      key={r.id}
+                    >
+                      <button
+                        className="approval-title"
+                        onClick={() => setSelected(r.task_id)}
+                      >
+                        {t?.title ?? "Задача"}
+                      </button>
+                      <p>
+                        {r.status === "approved" ? "Согласовано" : "Отклонено"}{" "}
+                        · Предлагался срок {date(r.proposed_deadline, true)}
+                      </p>
+                      <p className="muted">
+                        {profiles.find((p) => p.id === t?.assignee_id)?.name ??
+                          "Участник"}{" "}
+                        · Запрос от {date(r.created_at, true)}
+                      </p>
+                      <p>{r.reason}</p>
+                    </article>
+                  );
+                })}
             </section>
           )}
           {(view === "team" || view === "overview") && (
@@ -942,6 +1192,9 @@ export default function Dashboard({
                     : "Команда в цифрах"}
                 </h2>
                 <span>{profiles.length} участников</span>
+                {view === "overview" && person && (
+                  <button onClick={() => setPerson("")}>Все участники</button>
+                )}
               </div>
               {!profiles.length ? (
                 <Empty
@@ -949,111 +1202,151 @@ export default function Dashboard({
                   text="После подключения базы здесь появятся участники вашей команды."
                 />
               ) : (
-                profiles.map((p) => {
-                  const ts = tasks.filter((t) => t.assignee_id === p.id),
-                    completed = ts.filter((t) => t.status === "done"),
-                    withDeadline = completed.filter((t) => t.deadline),
-                    onTime = withDeadline.filter((t) => !t.completed_late);
-                  return (
-                    <div className="member-row" key={p.id}>
-                      <Avatar name={p.name} avatar={p.avatar_id} />
-                      <button
-                        className="member-name"
-                        onClick={() => {
-                          navigate("board");
-                          setPerson(p.id);
-                        }}
-                      >
-                        <strong>{p.name}</strong>
-                        <small>
-                          {view === "team"
-                            ? p.email
-                            : p.role === "admin"
-                              ? "Администратор"
-                              : "Сотрудник"}
-                        </small>
-                      </button>
-                      {view === "overview" ? (
-                        <div className="member-metrics">
-                          <span>
-                            <b>
-                              {
-                                ts.filter(
-                                  (t) => !t.archived_at && t.status !== "done",
-                                ).length
-                              }
-                            </b>
-                            активных
-                          </span>
-                          <span className="text-red">
-                            <b>
-                              {
-                                ts.filter(
-                                  (t) => !t.archived_at && overdue(t, clock),
-                                ).length
-                              }
-                            </b>
-                            просрочено
-                          </span>
-                          <span>
-                            <b>{completed.length}</b>готово
-                          </span>
-                          <span>
-                            <b>
-                              {withDeadline.length
-                                ? `${Math.round((onTime.length / withDeadline.length) * 100)}%`
-                                : "Нет данных"}
-                            </b>
-                            в срок
-                          </span>
-                          <span>
-                            <b>
-                              {ts.reduce((s, t) => s + t.deadline_changes, 0)}
-                            </b>
-                            переносов
-                          </span>
-                        </div>
-                      ) : (
-                        <>
-                          <span className="member-status">
-                            {p.role === "admin"
-                              ? "Администратор"
-                              : p.access_status === "active"
-                                ? "Доступ открыт"
-                                : p.access_status === "pending"
-                                  ? "Ждёт подтверждения"
-                                  : "Доступ закрыт"}
-                          </span>
-                          {p.role !== "admin" && (
-                            <button
-                              className="outline"
-                              disabled={busy}
-                              onClick={() => {
-                                if (
-                                  p.access_status !== "active" ||
-                                  window.confirm(
-                                    `Закрыть доступ для ${p.name}?`,
-                                  )
-                                )
-                                  void mutate("access", {
-                                    id: p.id,
-                                    status:
-                                      p.access_status === "active"
-                                        ? "blocked"
-                                        : "active",
-                                  });
-                              }}
-                            >
-                              {p.access_status === "active"
-                                ? "Закрыть доступ"
-                                : "Предоставить доступ"}
+                profiles
+                  .filter(
+                    (p) => view !== "overview" || !person || p.id === person,
+                  )
+                  .map((p) => {
+                    const ts = tasks.filter((t) => t.assignee_id === p.id),
+                      completed = ts.filter((t) => t.status === "done"),
+                      withDeadline = completed.filter((t) => t.deadline),
+                      onTime = withDeadline.filter((t) => !t.completed_late);
+                    return (
+                      <div className="member-row" key={p.id}>
+                        <Avatar name={p.name} avatar={p.avatar_id} />
+                        <button
+                          className="member-name"
+                          onClick={() => {
+                            navigate("board");
+                            setPerson(p.id);
+                          }}
+                        >
+                          <strong>{p.name}</strong>
+                          <small>
+                            {view === "team"
+                              ? p.email
+                              : p.role === "admin"
+                                ? "Администратор"
+                                : "Сотрудник"}
+                          </small>
+                        </button>
+                        {view === "overview" ? (
+                          <div className="member-metrics">
+                            <button onClick={() => showMetric(p.id, "active")}>
+                              <b>
+                                {
+                                  ts.filter(
+                                    (t) =>
+                                      !t.archived_at && t.status !== "done",
+                                  ).length
+                                }
+                              </b>
+                              активных
                             </button>
-                          )}
-                        </>
-                      )}
-                    </div>
-                  );
-                })
+                            <button
+                              className="text-red"
+                              onClick={() => showMetric(p.id, "active", true)}
+                            >
+                              <b>
+                                {
+                                  ts.filter(
+                                    (t) => !t.archived_at && overdue(t, clock),
+                                  ).length
+                                }
+                              </b>
+                              просрочено
+                            </button>
+                            <button onClick={() => showMetric(p.id, "done")}>
+                              <b>{completed.length}</b>готово
+                            </button>
+                            <button onClick={() => showMetric(p.id, "on-time")}>
+                              <b>
+                                {withDeadline.length
+                                  ? `${Math.round((onTime.length / withDeadline.length) * 100)}%`
+                                  : "Нет данных"}
+                              </b>
+                              в срок
+                            </button>
+                            <button onClick={() => showMetric(p.id, "changed")}>
+                              <b>
+                                {ts.reduce((s, t) => s + t.deadline_changes, 0)}
+                              </b>
+                              переносов
+                            </button>
+                          </div>
+                        ) : (
+                          <>
+                            <div className="member-workload">
+                              <button
+                                onClick={() => showMetric(p.id, "active")}
+                              >
+                                {
+                                  ts.filter(
+                                    (t) =>
+                                      !t.archived_at && t.status !== "done",
+                                  ).length
+                                }{" "}
+                                активных
+                              </button>
+                              <button
+                                className="text-red"
+                                onClick={() => showMetric(p.id, "active", true)}
+                              >
+                                {
+                                  ts.filter(
+                                    (t) => !t.archived_at && overdue(t, clock),
+                                  ).length
+                                }{" "}
+                                просрочено
+                              </button>
+                              <button
+                                onClick={() => {
+                                  navigate("overview");
+                                  setPerson(p.id);
+                                }}
+                              >
+                                Показатели
+                              </button>
+                            </div>
+                            <span className="member-status">
+                              {p.role === "admin"
+                                ? "Администратор"
+                                : p.access_status === "active"
+                                  ? "Доступ открыт"
+                                  : p.access_status === "pending"
+                                    ? "Ждёт подтверждения"
+                                    : "Доступ закрыт"}
+                            </span>
+                            {p.role !== "admin" && (
+                              <button
+                                className="outline"
+                                disabled={busy}
+                                onClick={() => {
+                                  if (
+                                    p.access_status !== "active" ||
+                                    window.confirm(
+                                      `Закрыть доступ для ${p.name}?`,
+                                    )
+                                  )
+                                    void mutate("access", {
+                                      id: p.id,
+                                      status:
+                                        p.access_status === "active"
+                                          ? "blocked"
+                                          : "active",
+                                    });
+                                }}
+                              >
+                                {p.access_status === "active"
+                                  ? "Закрыть доступ"
+                                  : "Предоставить доступ"}
+                              </button>
+                            )}
+                          </>
+                        )}
+                      </div>
+                    );
+                  })
               )}
               {view === "team" && (
                 <div className="team-invite">
@@ -1192,6 +1485,7 @@ export default function Dashboard({
           <TaskDrawer
             key={task.id}
             task={task}
+            preview={setup}
             data={data}
             mutate={mutate}
             busy={busy}
