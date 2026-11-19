@@ -50,6 +50,7 @@ before(async () => {
   await db.exec(
     readFileSync("supabase/migrations/006_required_task_deadline.sql", "utf8"),
   );
+  await db.exec(readFileSync("supabase/migrations/010_shared_board.sql", "utf8"));
   for (const [id, name] of [
     [admin, "Админ"],
     [employee, "Сотрудник"],
@@ -174,18 +175,14 @@ test("Отклонённый перенос не меняет текущий и 
   assert.equal(t.deadline.toISOString(), "2020-05-01T12:00:00.000Z");
   assert.equal(t.deadline_changes, 0);
 });
-test("RLS скрывает чужие задачи, историю, комментарии и заявки; RPC также запрещён", async () => {
-  await identity(admin);
+test("Участник видит карточку коллеги и историю, менять задачу может только исполнитель или администратор", async () => {
+  await identity(employee);
   const id = await create();
-  await mutate(id, "comment", { content: "Секретный контекст" });
+  await mutate(id, "comment", { content: "Контекст задачи" });
   await identity(other);
-  assert.equal(await get(id), undefined);
+  assert.equal((await get(id)).assignee_id, employee);
   for (const table of ["task_events", "task_comments", "deadline_requests"])
-    assert.equal(
-      (await db.query(`select * from public.${table} where task_id=$1`, [id]))
-        .rows.length,
-      0,
-    );
+    assert.ok((await db.query(`select * from public.${table} where task_id=$1`, [id])).rows.length);
   await assert.rejects(
     () => action("status", { id, version: 2, status: "progress" }),
     /недоступна/,
@@ -313,7 +310,9 @@ test("Согласованный снимок соблюдает RLS и соде
     await db.query<any>("select public.workspace_data() as data")
   ).rows[0].data;
   assert.equal(snapshot.profile.id, employee);
-  assert.ok(snapshot.tasks.every((t: any) => t.assignee_id === employee));
+  const colleague = snapshot.profiles.find((p: any) => p.id === admin);
+  assert.equal(colleague.name, "Админ");
+  assert.equal(colleague.email, undefined);
   assert.ok(
     snapshot.events.every((e: any) =>
       snapshot.tasks.some((t: any) => t.id === e.task_id),

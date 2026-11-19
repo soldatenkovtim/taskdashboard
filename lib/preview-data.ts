@@ -44,8 +44,7 @@ export function previewData(
     description: "Демонстрационные данные. Сохранение отключено.",
     status: statuses[i % 4].id,
     priority: i % 5 === 0 ? "high" : "medium",
-    assignee_id:
-      role === "employee" || i % 2 === 0 ? "demo-employee" : "demo-other",
+    assignee_id: profiles[(i + 1) % profiles.length].id,
     created_by: "demo-admin",
     original_deadline: iso(-2),
     deadline: iso((i % 3) - 1),
@@ -60,7 +59,7 @@ export function previewData(
   }));
   return {
     profile: profiles[role === "admin" ? 0 : 1],
-    profiles: role === "admin" ? profiles : [profiles[1]],
+    profiles,
     tasks,
     requests: tasks
       .filter((t) => t.status === "progress")
