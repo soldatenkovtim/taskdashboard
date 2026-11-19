@@ -216,6 +216,7 @@ export function TaskDrawer({
     [returnForm, setReturnForm] = useState(false),
     [comment, setComment] = useState("");
   const admin = data.profile.role === "admin",
+    canEdit = admin || t.assignee_id === data.profile.id,
     assignee = data.profiles.find((p) => p.id === t.assignee_id),
     request = data.requests.find(
       (r) => r.task_id === t.id && r.status === "pending",
@@ -314,7 +315,7 @@ export function TaskDrawer({
           {error}
         </p>
       )}
-      {!t.archived_at && (
+      {canEdit && !t.archived_at && (
         <div className="status-actions">
           {t.status === "todo" && (
             <button
@@ -439,7 +440,7 @@ export function TaskDrawer({
           )}
         </div>
       )}
-      {!request && !t.archived_at && t.status !== "done" && (
+      {canEdit && !request && !t.archived_at && t.status !== "done" && (
         <button
           className="deadline-button"
           onClick={() => setDeadlineForm(!deadlineForm)}
@@ -453,7 +454,7 @@ export function TaskDrawer({
           <ArrowUpRight size={14} />
         </button>
       )}
-      {deadlineForm && (
+      {canEdit && deadlineForm && (
         <form
           className="inset-form"
           onSubmit={async (e) => {
@@ -543,7 +544,7 @@ export function TaskDrawer({
           )}
         </dl>
       </details>
-      <ProjectFiles task={t} tasks={data.tasks} preview={preview} />
+      <ProjectFiles canAdd={canEdit} task={t} tasks={data.tasks} preview={preview} />
       <section className="activity-section">
         <h3>
           Движение задачи <span>{entries.length}</span>
@@ -606,7 +607,7 @@ export function TaskDrawer({
           );
         })}
       </section>
-      {!t.archived_at && (
+      {canEdit && !t.archived_at && (
         <form
           className="comment-form"
           onSubmit={async (e) => {

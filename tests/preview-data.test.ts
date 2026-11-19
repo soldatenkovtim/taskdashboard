@@ -52,7 +52,7 @@ test("Наборы плотности 5/15/30 доступны только в d
           Date.now = originalNow;
         }
         if (role === "employee")
-          assert.ok(data.tasks.every((t) => t.assignee_id === data.profile.id));
+          assert.ok(data.tasks.some((t) => t.assignee_id !== data.profile.id));
       }
     }
   } finally {

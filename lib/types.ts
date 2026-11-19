@@ -2,7 +2,7 @@ export type Status = "todo" | "progress" | "review" | "done";
 export type Profile = {
   id: string;
   name: string;
-  email: string;
+  email?: string;
   role: "admin" | "employee";
   playful_reactions?: boolean;
   avatar_id?: string | null;

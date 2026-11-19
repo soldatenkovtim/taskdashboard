@@ -26,10 +26,14 @@ async function operation(action: string, payload: Record<string, unknown>) {
 export default function ProjectFiles({
   task,
   tasks = [],
+  writableTasks = tasks,
+  canAdd = true,
   preview = false,
 }: {
   task?: Task;
   tasks?: Task[];
+  writableTasks?: Task[];
+  canAdd?: boolean;
   preview?: boolean;
 }) {
   const [materials, setMaterials] = useState<Material[]>([]),
@@ -184,13 +188,13 @@ export default function ProjectFiles({
               : "Документы, ссылки и пояснения — по проектам. Здесь хранятся принятые результаты и материалы, добавленные напрямую."}
           </p>
         </div>
-        <button
+        {canAdd && <button
           className="outline"
           onClick={() => setAdding(!adding)}
           disabled={preview || busy}
         >
           {adding ? "Скрыть форму" : "Добавить материал"}
-        </button>
+        </button>}
       </header>
       {preview && (
         <p className="files-notice">
@@ -211,7 +215,7 @@ export default function ProjectFiles({
           </button>
         </p>
       )}
-      {adding && (
+      {canAdd && adding && (
         <form className="files-form" onSubmit={save}>
           <fieldset disabled={busy}>
             <label>
@@ -301,7 +305,7 @@ export default function ProjectFiles({
                   <option value="">
                     Без задачи / материал старого проекта
                   </option>
-                  {tasks.map((t) => (
+                  {writableTasks.map((t) => (
                     <option key={t.id} value={t.id}>
                       КТ–{t.id.slice(0, 4)} · {t.title}
                       {t.status === "done"

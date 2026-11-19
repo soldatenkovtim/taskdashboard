@@ -373,7 +373,7 @@ export default function Dashboard({
   }
   async function move(id: string, status: Status) {
     const t = tasks.find((t) => t.id === id);
-    if (!t || t.status === status) return;
+    if (!t || (!admin && t.assignee_id !== data?.profile.id) || t.status === status) return;
     if (
       status === "done" &&
       !window.confirm("Принять задачу и зафиксировать результат?")
@@ -682,16 +682,16 @@ export default function Dashboard({
             </div>
           )}
           {view === "files" && (
-            <ProjectFiles tasks={data?.tasks ?? []} preview={setup} />
+            <ProjectFiles tasks={tasks} writableTasks={admin ? tasks : tasks.filter(t => t.assignee_id === data?.profile.id)} preview={setup} />
           )}
           {(view === "overview" || (view === "board" && !admin)) && data && !loading && !error && (() => {
-            const visible = tasks.filter(t => (admin || t.assignee_id === data.profile.id) && (!person || t.assignee_id === person));
+            const visible = tasks.filter(t => !person || t.assignee_id === person);
             const overdueTasks = visible.filter(t => !t.archived_at && overdue(t, clock));
             if (overdueTasks.length) return (
               <NoirCharacter context={view === "board" ? "board" : "overview"} state="disappointed" size="medium" caption="Кажется, у нас разговор">
                 <p>Просроченных задач: {overdueTasks.length}</p>
                 <button onClick={() => {
-                  showMetric(person || (admin ? "" : data.profile.id), "", true);
+                  showMetric(person, "", true);
                   setBoardJump(value => value + 1);
                   setMobileCol(overdueTasks[0].status);
                 }}>Посмотреть просроченные <ArrowRight size={14} aria-hidden="true" /></button>
@@ -707,9 +707,18 @@ export default function Dashboard({
                 <div className="board-view">
                   <LayoutGrid size={16} />
                   <strong>
-                    {view === "archive" ? "Архив задач" : lateOnly ? "Просроченные задачи" : "Все задачи"}
+                    {view === "archive" ? "Архив задач" : lateOnly ? "Просроченные задачи" : person ? (person === data?.profile.id ? "Мои задачи" : profiles.find(p => p.id === person)?.name) : "Все задачи"}
                   </strong>
                   <span>{filtered.length}</span>
+                  {data && (
+                    <button
+                      className={`tool-button ${person === data.profile.id ? "selected" : ""}`}
+                      aria-pressed={person === data.profile.id}
+                      onClick={() => setPerson(person === data.profile.id ? "" : data.profile.id)}
+                    >
+                      Мои задачи
+                    </button>
+                  )}
                 </div>
                 <div className="board-controls">
                   <label className="search-field">
@@ -722,15 +731,16 @@ export default function Dashboard({
                     />
                     <kbd>⌕</kbd>
                   </label>
-                  {admin && (
+                  {data && (
                     <select
                       aria-label="Фильтр по исполнителю"
                       value={person}
                       onChange={(e) => setPerson(e.target.value)}
                     >
-                      <option value="">Все участники</option>
+                      <option value="">Все задачи</option>
+                      <option value={data.profile.id}>Мои задачи</option>
                       {profiles
-                        .filter((p) => p.access_status === "active")
+                        .filter((p) => p.access_status === "active" && p.id !== data.profile.id)
                         .map((p) => (
                           <option key={p.id} value={p.id}>
                             {p.name}
@@ -806,7 +816,7 @@ export default function Dashboard({
                   </button>
                 </div>
               )}
-              {view === "board" && data && !loading && !error && !tasks.some(t => !t.archived_at && (admin || t.assignee_id === data.profile.id)) && (
+              {view === "board" && data && !loading && !error && !tasks.some(t => !t.archived_at && (!person || t.assignee_id === person)) && (
                 <NoirCharacter context="board" state="playful" caption="Ну что, начнём?" />
               )}
               {view === "archive" ? (
@@ -918,7 +928,7 @@ export default function Dashboard({
                             items.map((t) => (
                               <article
                                 key={t.id}
-                                draggable={!busy && !t.archived_at}
+                                draggable={!busy && !t.archived_at && (admin || t.assignee_id === data?.profile.id)}
                                 onDragStart={(e) =>
                                   e.dataTransfer.setData("text/plain", t.id)
                                 }
@@ -989,6 +999,7 @@ export default function Dashboard({
                                     value={t.status}
                                     disabled={
                                       busy ||
+                                      (!admin && t.assignee_id !== data?.profile.id) ||
                                       !!t.archived_at ||
                                       t.status === "done"
                                     }
